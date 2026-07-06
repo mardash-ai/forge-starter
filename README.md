@@ -1,12 +1,17 @@
 # Forge Starter
 
-The drop-dead simplest way to start building with **Forge**. This is *your project* — Forge runs alongside it as a container. Everything runs in Docker.
+The drop-dead simplest way to start building with **Forge**. This is *your project* — Forge
+runs alongside it as a container. **Every repo is a single app**, and it lives at `./app`.
+Everything runs in Docker.
 
 ## Requirements
 
-Just **Docker** (with the Compose plugin — included in Docker Desktop). No Node, npm, or anything else.
+Just **Docker** (with the Compose plugin — included in Docker Desktop). No Node, npm, or
+anything else.
 
-> Forge runs as its **control plane** image (`ghcr.io/mardash-ai/forge-control-plane`) — the developer/orchestration runtime. (A separate, slimmer **data plane** image handles production/deploy later; it won't carry developer dependencies.)
+> Forge runs as its **control plane** image (`ghcr.io/mardash-ai/forge-control-plane`) — the
+> developer/orchestration runtime. (A separate, slimmer **data plane** image handles
+> production/deploy later; it won't carry developer dependencies.)
 
 ## From zero to a working app — one command
 
@@ -19,7 +24,9 @@ cd my-project
 ./new-app my-app
 ```
 
-`./new-app` starts the platform, then runs the whole lifecycle — **init → provision → install → build → test → lint** — checking each step, diagnosing any failure for you, and printing a summary. Options:
+`./new-app` starts the platform, then runs the whole lifecycle — **init → provision → install
+→ build → test → lint** — checking each step, diagnosing any failure for you, and printing a
+summary. Options:
 
 ```bash
 ./new-app my-app --with-postgres      # add a Postgres service
@@ -27,7 +34,7 @@ cd my-project
 ./new-app my-app --dev                # also start the dev server and wait for health
 ```
 
-Your app is created in `apps/my-app/`. Run it any time:
+Your app is created at **`./app`** (one app per repo). Run it any time:
 
 ```bash
 ./forge dev --app my-app              # http://localhost:3000
@@ -35,15 +42,30 @@ Your app is created in `apps/my-app/`. Run it any time:
 
 ## Even simpler: let Claude drive
 
-This starter ships a Claude Code skill (`.claude/skills/provision-app`) and a `CLAUDE.md`. Open the project in Claude Code and just say:
+This starter ships Claude Code skills (`.claude/skills/`) and a `CLAUDE.md`. Open the project
+in Claude Code and just say:
 
 > **"Build me a task tracker."**
 
-Claude runs `./new-app` (or the granular steps), fixes failures itself using `forge explain`, and iterates. You never have to remember commands.
+Claude runs `./new-app` (or the granular steps), fixes failures itself using `forge explain`,
+and iterates. You never have to remember commands.
+
+### Skills that ship with this starter
+
+The `.claude/skills/` directory gives Claude project-specific know-how so it drives Forge the
+right way. Three skills come bundled:
+
+| Skill | What it does |
+|---|---|
+| **`add-a-feature`** | The spec-driven, design-first workflow for adding or evolving a feature — write a short spec, design the UI first, implement under `./app`, then validate and verify end-to-end. |
+| **`provision-app`** | The Forge mechanics — scaffold, provision, install, build, test, and lint the app in Docker via `./forge`, diagnosing failures with `forge explain`. |
+| **`frontend-design`** | Guidance for distinctive, intentional UI — typography, layout, and aesthetic choices that don't read as templated defaults. |
+
+You don't invoke these directly; Claude picks the right one for what you ask.
 
 ## Iterating step by step
 
-Once an app exists, work capability by capability:
+Once the app exists, work capability by capability:
 
 ```bash
 ./forge build --app my-app            # rebuild after edits
@@ -54,28 +76,36 @@ Once an app exists, work capability by capability:
 ./forge plan --app my-app --goal "Add project tracking"
 ```
 
-Every `./forge` command returns compact JSON with a `suggested_next` hint. Add `--summary` for human-readable output, or `./forge logs <id> --full` for a full log.
+Every `./forge` command returns compact JSON with a `suggested_next` hint. Add `--summary`
+for human-readable output, or `./forge logs <id> --full` for a full log.
 
-## Adding features (spec-driven)
+## Adding features (spec-driven, design-first)
 
-Build on your app by writing a short feature spec (a Goal + acceptance criteria) and letting Claude implement and validate it. See **[ADD_A_FEATURE.md](ADD_A_FEATURE.md)** for the template plus bare-bones and robust examples.
+Write a short feature spec (a Goal + acceptance criteria) in `specs/<feature-slug>/FEATURE.md`
+and let Claude implement and validate it — designing the UI first for anything visual. See
+**[specs/ADD_A_FEATURE.md](specs/ADD_A_FEATURE.md)** for the template, and the **`add-a-feature`**
+skill for the full workflow.
 
 ## What is this directory?
 
 | Path | What it is |
 |---|---|
-| `apps/<name>/` | The apps you build. **This is your product — commit it.** |
+| `app/` | **Your app** — the product. Created at `./app` by `./new-app` / `./forge init`. Commit it. |
+| `specs/` | Feature specs — `specs/ADD_A_FEATURE.md` + `specs/<feature>/{FEATURE,DESIGN}.md`. |
 | `.forge/` | Forge's local Resource/Event/log store (gitignored). |
-| `./new-app` | One command: scaffold + validate a new app. |
+| `.claude/skills/` | `add-a-feature`, `provision-app`, `frontend-design`. |
+| `./new-app` | One command: scaffold + validate the app. |
 | `./forge` | Thin CLI → talks to the Forge control-plane container. |
 | `compose.yaml`, `Makefile` | Launch the platform. Leave them alone. |
 
-There is **no Forge source here** — Forge is a black-box platform you use through `./forge` / `./new-app` (and the HTTP API on `http://localhost:3717`). Your app never imports Forge internals.
+There is **no Forge source here** — Forge is a black-box platform you use through `./forge` /
+`./new-app` (and the HTTP API on `http://localhost:3717`). Your app never imports Forge
+internals.
 
 ## Commands
 
 ```bash
-./new-app <name>            # scaffold + build + test + lint a new app (one command)
+./new-app <name>            # scaffold + build + test + lint the app (one command)
 make up / make down          # start / stop the platform
 make logs / make shell       # tail logs / shell into the platform
 make pull                    # update the control-plane image
@@ -83,4 +113,5 @@ make pull                    # update the control-plane image
 
 ## Running more than one project at once
 
-One Forge platform binds one port (default `3717`). To run a second project simultaneously, copy `.env.example` to `.env` and set a unique `FORGE_PORT`.
+One Forge platform binds one port (default `3717`). To run a second project simultaneously,
+copy `.env.example` to `.env` and set a unique `FORGE_PORT`.
