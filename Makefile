@@ -1,7 +1,8 @@
 # Forge starter — convenience commands. These ONLY delegate to Docker.
 # No local Node, npm, or build tools are assumed.
 
-.PHONY: up down logs shell ps restart pull new-app
+.PHONY: up down logs shell ps restart pull new-app \
+        deploy deploy-ps deploy-logs deploy-config deploy-down
 
 up:
 	docker compose up -d
@@ -34,3 +35,33 @@ restart:
 # Refresh the platform image from the registry.
 pull:
 	docker compose pull
+
+# --- Production deployment (compose.prod.yaml) -----------------------------
+# Zero-downtime is a PLATFORM capability — `forge deploy` (C7). `make deploy` ensures the control
+# plane is up, then rolls the public `web` service start-first (new replica up + healthy before
+# the old drains out of Traefik). Configure `.env` from `.env.prod.example` first; see DEPLOY.md.
+PROD := docker compose -f compose.prod.yaml
+APP  ?= $(APP_NAME)
+
+deploy:
+	@test -n "$(APP)" || (echo "set APP=<app-name> (or APP_NAME in .env)"; exit 2)
+	$(MAKE) up          # ensure the control plane is running (idempotent; pulls its image if missing)
+	./forge deploy --app "$(APP)" --proxy-net proxy
+	@$(PROD) ps
+	@echo ""
+	@echo "Deployed $(APP) (zero-downtime roll via forge deploy)."
+
+deploy-ps:
+	$(PROD) ps
+
+deploy-logs:
+	$(PROD) logs -f
+
+# Validate compose.prod.yaml + the resolved .env without touching anything.
+deploy-config:
+	$(PROD) config
+
+# Stop the stack but KEEP the data volumes (postgres_data, forge_state).
+# (Never `down -v` in prod — that destroys the database.)
+deploy-down:
+	$(PROD) down

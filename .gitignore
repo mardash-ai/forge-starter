@@ -9,3 +9,7 @@ apps/*/next-env.d.ts
 # Local overrides
 .env
 *.log
+
+# Operator-local deploy transport (e.g. SSH wrappers that may hold a key passphrase).
+# Keep these OUT of the repo — see DEPLOY.md → "Deploying to a remote host".
+/release/

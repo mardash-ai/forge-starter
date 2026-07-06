@@ -15,6 +15,14 @@ skill appends to `[Unreleased]` automatically on every commit.
 ### Added
 
 - Initial project scaffold from **forge-starter**.
+- **Production deployment pipeline with zero-downtime deploys.** New `compose.prod.yaml`
+  (Traefik-fronted `web` + optional Forge data-plane sidecar + Postgres, health-gated for
+  rolling), `.env.prod.example`, `deploy/` (`jobs.json` + the standalone `app-image/` Dockerfile
+  template), CI/publish GitHub workflows (guarded so the bare template stays green), and
+  [`DEPLOY.md`](DEPLOY.md). `make deploy` starts the control plane transiently and runs the Forge
+  **`Deploy` capability** (`forge deploy`, control plane ≥ 0.6.1) — a start-first roll of the public
+  `web` service with automatic rollback, so the site never loses its backend. No `rollout.sh` to
+  maintain: zero-downtime lives in the platform, and apps consume it.
 
 ### Changed
 
