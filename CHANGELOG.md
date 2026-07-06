@@ -15,3 +15,11 @@ skill appends to `[Unreleased]` automatically on every commit.
 ### Added
 
 - Initial project scaffold from **forge-starter**.
+
+### Changed
+
+- **`provision-app` skill: `provision` is now documented as convergent on control-plane ≥ 0.3.0.**
+  Reads the app's desired infra (Postgres/Redis, secrets, host-port remaps) from `forge.app.json`
+  and converges — flags are additive, a flag-less re-provision drops nothing, and dropping a
+  data-volume service needs `--force`. The old "re-pass every flag or you'll lose services" warning
+  is now scoped to control planes older than `0.3.0`.
