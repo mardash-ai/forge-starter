@@ -11,12 +11,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     ## [X.Y.Z] — YYYY-MM-DD section. The separator is an EM DASH "—" (U+2014), not a hyphen.
   - Sections in order: ### Added, ### Changed, ### Fixed. Lead bullets are bold-scope-prefixed
     and end with a period; sub-bullets indent 2 spaces. Inline code in backticks; no commit hashes/URLs.
-  - Version source of truth is package.json "version". SemVer: feature => MINOR, fix => PATCH,
-    breaking => MAJOR. `/commit-code` bumps the version and adds the matching dated entry.
+  - Version source of truth is app/package.json "version" (present in every clone). In the bare
+    template repo (no ./app yet) the version lives in this CHANGELOG's latest heading + git tags.
+    SemVer: feature => MINOR, fix => PATCH, breaking => MAJOR. `/commit-code` bumps the version and
+    adds the matching dated entry.
   - Keep the footer compare links (newest first) in sync with the GitHub remote.
 -->
 
 ## [Unreleased]
+
+## [0.2.1] — 2026-07-07
+
+### Changed
+
+- **Move the version manifest to `app/package.json`, aligning forge-starter with the rest of
+  mardash.** `/commit-code` now bumps the version with
+  `npm version <directive> --no-git-tag-version --prefix app`, so every cloned app versions its own
+  build manifest. The bare template repo — which scaffolds its app on clone and ships no `./app` —
+  records its own version in this `CHANGELOG.md` heading plus the `v<new>` git tag, and `/commit-code`
+  skips the `npm version` bump when no `app/package.json` is present. The canonical changelog
+  discipline (em-dash `## [X.Y.Z] — <date>` headings, footer compare links) is unchanged.
+
+### Removed
+
+- **The root `package.json`.** The Docker-only template advertises no root Node toolchain, so the
+  standalone repo-level version manifest is gone; `app/package.json` (present in every clone) is the
+  source of truth instead.
 
 ## [0.2.0] — 2026-07-07
 
@@ -80,7 +100,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   service requires `--force`. Scope the old "re-pass every flag or lose services" warning to control
   planes older than `0.3.0`.
 
-[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/mardash-ai/forge-starter/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/mardash-ai/forge-starter/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/mardash-ai/forge-starter/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/mardash-ai/forge-starter/commit/0584fd31a129695fef28e89a6079f1a7ca01afff

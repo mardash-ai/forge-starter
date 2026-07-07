@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git rev-parse:*), Bash(git remote:*), Bash(git tag:*), Bash(npm version:*), Bash(node:*), Bash(basename:*), Bash(date:*), Read, Edit, Write
+allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*), Bash(git branch:*), Bash(git log:*), Bash(git diff:*), Bash(git rev-parse:*), Bash(git remote:*), Bash(git tag:*), Bash(npm version:*), Bash(node:*), Bash(basename:*), Bash(date:*), Bash(sed:*), Bash(test:*), Read, Edit, Write
 argument-hint: [patch|minor|major|X.Y.Z] [commit message]
 description: Bump the SemVer version, update CHANGELOG.md, and commit (no image publish, no tag push)
 ---
@@ -11,8 +11,10 @@ Records the working changes as one commit with a **Semantic Versioning bump** an
 is a separate, tag-triggered CI concern.
 
 This command ships in the **forge-starter** template, so it is inherited by every app cloned from it.
-Keep it generic: it derives the project from `package.json` / the git remote and hardcodes no project
-name.
+Keep it generic: it derives the project from `app/package.json` / the git remote and hardcodes no
+project name. The version source of truth is **`app/package.json`** (the app manifest present in every
+clone). The bare template repo has no `./app` yet — its app is scaffolded on clone — so in the
+template the version lives in this `CHANGELOG.md` + the `v<new>` git tag instead.
 
 ## Arguments
 
@@ -29,7 +31,7 @@ name.
 - Working tree status: !`git status --short`
 - Staged + unstaged diff: !`git diff HEAD`
 - Recent commits: !`git log --oneline -10`
-- Current version: !`node -p "require('./package.json').version"`
+- Current version: !`node -p "require('./app/package.json').version" 2>/dev/null || sed -n 's/^## \[\([0-9][^]]*\)\] .*/\1/p' CHANGELOG.md | head -1`
 - Today (ISO 8601): !`date +%F`
 - Origin remote: !`git remote get-url origin`
 
@@ -38,10 +40,13 @@ name.
 1. **Guard the branch.** If the current branch is not `main`, **stop** and tell the user to switch to
    `main` (or open a PR). Do nothing else.
 
-2. **Resolve the target version.** Read `version` from `package.json` (the source of truth). Apply the
-   directive: `patch`/`minor`/`major` bump per SemVer, or use the explicit `X.Y.Z` verbatim. Call the
-   result `<new>`. Derive `<owner>/<repo>` from `git remote get-url origin` and `<today>` from the
-   context above.
+2. **Resolve the target version.** Read `version` from `app/package.json` — the app manifest present in
+   every clone — as the source of truth. **If there is no `./app`** (you are in the bare forge-starter
+   template repo, which scaffolds its app on clone), there is no app manifest; read the latest released
+   `## [X.Y.Z]` heading from `CHANGELOG.md` instead (the template's own version lives in `CHANGELOG.md`
+   + git tags). Apply the directive: `patch`/`minor`/`major` bump per SemVer, or use the explicit
+   `X.Y.Z` verbatim. Call the result `<new>`. Derive `<owner>/<repo>` from `git remote get-url origin`
+   and `<today>` from the context above.
 
 3. **Require a canonical CHANGELOG entry — refuse to proceed without it.** Edit `CHANGELOG.md` so it
    contains a section `## [<new>] — <today>` (the separator is an **EM DASH `—`**, U+2014, not a
@@ -59,15 +64,22 @@ name.
    - If `CHANGELOG.md` does not exist, create it from the template's preamble first.
    - **If you cannot produce a truthful entry for this bump, stop** — do not bump or commit.
 
-4. **Bump the version.** Run:
+4. **Bump the version.**
 
-   ```bash
-   npm version <directive> --no-git-tag-version
-   ```
+   - **If `app/package.json` exists** (the normal case in a clone), run:
 
-   (For an explicit target, `npm version <X.Y.Z> --no-git-tag-version`.) This updates
-   `package.json` (and `package-lock.json` if present). Confirm the result equals `<new>`; if not,
-   reconcile the CHANGELOG heading to match `package.json`.
+     ```bash
+     npm version <directive> --no-git-tag-version --prefix app
+     ```
+
+     (For an explicit target, `npm version <X.Y.Z> --no-git-tag-version --prefix app`.) This updates
+     `app/package.json` (and `app/package-lock.json` if present). Confirm the result equals `<new>`;
+     if not, reconcile the CHANGELOG heading to match `app/package.json`.
+
+   - **If there is no `./app`** (the bare template repo), there is **no app manifest to bump** — skip
+     `npm version` entirely. **Do not** create an `app/` or a root `package.json`. The `## [<new>]`
+     heading you wrote in `CHANGELOG.md` (step 3), together with the maintainer's `v<new>` git tag, is
+     the template's version of record.
 
 5. **Commit.** Stage and commit everything as a single commit:
 
