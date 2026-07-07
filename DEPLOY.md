@@ -12,32 +12,45 @@ one drains out of the proxy), so the site never loses its backend.
 
 ## 1. Productionize the app (once)
 
-The dev app that `./new-app` scaffolds needs three small prod additions under `app/`:
+**Forge generates your production artifacts — you don't hand-stage them.** Once `./app` exists, run
+the **`Productionize` capability**:
 
-1. **Standalone output** — in `app/next.config.mjs` set:
-   ```js
-   const nextConfig = { output: 'standalone', /* ...your config... */ };
-   ```
-2. **Dockerfile + .dockerignore** — copy the templates:
-   ```bash
-   cp deploy/app-image/Dockerfile     app/Dockerfile
-   cp deploy/app-image/.dockerignore  app/.dockerignore
-   ```
-3. **A health route** — the deploy roll is gated on `GET /api/health` returning `200`. `./new-app`
-   scaffolds one; keep it cheap (no external calls).
+```bash
+./forge productionize --app <app> --host <your-domain> \
+  --web-image ghcr.io/<owner>/<repo>@sha256:<digest> \
+  [--data-plane-image ghcr.io/mardash-ai/forge-data-plane@sha256:<digest>] \
+  [--readiness-path /api/health]
+```
 
-Commit these. Pushing to `main` triggers [`ci.yml`](.github/workflows/ci.yml) (test + build) and
-[`publish-app.yml`](.github/workflows/publish-app.yml) (publishes `ghcr.io/<owner>/<repo>` multi-arch).
+It emits — **digest-pinned** and **convergent** (safe to re-run: it reconciles from the app's
+persisted `infra` + `--host`, so nothing you didn't ask for is dropped):
+
+- `app/Dockerfile` + `app/.dockerignore` — the Next.js **standalone** image build.
+- `output: 'standalone'` in `app/next.config.mjs`.
+- `compose.prod.yaml` — Traefik-fronted `web` (health-gated) + data-plane + Postgres, all pinned by digest.
+- `.env.prod.example` — the env template you copy to `.env` in step 2.
+
+- **Readiness path** *(you choose)* — the deploy roll gates on `--readiness-path` (default
+  `GET /api/health` returning `200`). `./new-app` scaffolds a matching route; keep it cheap (no
+  external calls).
+- **Host rule** *(you choose)* — `--host` is the public hostname Traefik routes to this app.
+
+Commit the generated files. Pushing to `main` triggers [`ci.yml`](.github/workflows/ci.yml)
+(test + build) and [`publish-app.yml`](.github/workflows/publish-app.yml) (publishes
+`ghcr.io/<owner>/<repo>` multi-arch — the image you pass back as `--web-image`). When that published
+digest changes, **re-run `forge productionize`** to repin `compose.prod.yaml` / `.env.prod.example`;
+it's convergent, so it just updates the pin.
 
 ## 2. Configure (once per deploy host)
 
 ```bash
 cp .env.prod.example .env && chmod 600 .env
 ```
-Then set `APP_NAME`, `APP_HOST`, `DB_NAME`, the pinned image digests (`APP_IMAGE`,
-`FORGE_DATA_PLANE_IMAGE`, `FORGE_IMAGE`), `POSTGRES_PASSWORD`, and any secrets. You edit **only
-`.env`** — `compose.prod.yaml` reads everything from it. Find digests with
-`docker buildx imagetools inspect <image>:latest`.
+`forge productionize` already pinned the image digests (`APP_IMAGE`, `FORGE_DATA_PLANE_IMAGE`,
+`FORGE_IMAGE`) into the generated `.env.prod.example`, so just set `APP_NAME`, `APP_HOST`, `DB_NAME`,
+`POSTGRES_PASSWORD`, and any secrets. You edit **only `.env`** — `compose.prod.yaml` reads everything
+from it. To repin later, **re-run `forge productionize`** (convergent) rather than hand-editing
+digests.
 
 Prereqs on the host: **Docker**, a running **Traefik** stack that owns the external `proxy` network
 (or `up` fails *"network proxy not found"*), DNS for `APP_HOST` pointing at the host, and
@@ -101,5 +114,5 @@ docker context create prod --docker "host=ssh://user@your-box"
 - **Scheduled jobs.** The data-plane registers jobs from [`deploy/jobs.json`](deploy/jobs.json) at
   boot and calls `http://web:3000<target>` on cadence. Ships empty; add entries once the app exposes
   the matching cron endpoints (see [`deploy/jobs.example.json`](deploy/jobs.example.json)).
-- **No app? No prod images.** CI + `make deploy` only do something once `app/` exists with the
-  Dockerfile above.
+- **No app? No prod images.** CI + `make deploy` only do something once `app/` exists and
+  `forge productionize` has generated its `app/Dockerfile`.

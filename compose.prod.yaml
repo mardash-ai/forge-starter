@@ -52,7 +52,7 @@ services:
   # Forge DATA-PLANE sidecar — the runtime capabilities the app needs (scheduler C2, secrets C5),
   # calling back into `web` over `internal`. Slim image, not exposed to Traefik. Remove if unused.
   data-plane:
-    image: ${FORGE_DATA_PLANE_IMAGE:-ghcr.io/mardash-ai/forge-data-plane:latest}
+    image: ${FORGE_DATA_PLANE_IMAGE:-ghcr.io/mardash-ai/forge-data-plane:0.11.0@sha256:0528e92059e2871dc1382aa43fb0fb32979349e3d2d0b82b96fd17c7ba2dda89}
     pull_policy: missing
     restart: unless-stopped
     environment:

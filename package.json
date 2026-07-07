@@ -1,6 +1,6 @@
 {
   "name": "forge-starter",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "Repo version manifest. `version` is the release source of truth (Keep a Changelog + SemVer); /commit-code bumps it. This is NOT the app's own build manifest — that lives at app/package.json when an app exists."
 }
