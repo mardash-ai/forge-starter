@@ -20,6 +20,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-08
+
+### Added
+
+- **Inherit the platform status page (C15).** The Forge platform now serves a Statuspage-style public
+  **`/status`** (HTML) + **`/status.json`** for a productionized app, aggregating its health. `DEPLOY.md`
+  documents it and the opt-in **uptime history** (a background sampler + per-day timeline) enabled with
+  **`FORGE_STATUS_SAMPLE=1`** in `app/.env.prod`. Platform-served — nothing to build in the app.
+- **Inherit app theming (C16).** A **`forge.theme.json`** at the app root now brands **all**
+  platform-served UI — the sign-in pages *and* the `/status` page — via `--forge-*` CSS tokens (a pinned
+  `mode: "dark"` makes `colors{}` the whole dark palette). Documented in `DEPLOY.md` and added to the
+  `README.md` "What is this directory?" table as an optional file; absent → the platform's neutral defaults.
+- **Inherit `forge verify` (C14).** `DEPLOY.md` now describes `forge verify --app <app> --host <host>` — a
+  post-deploy smoke check that asserts the C6 health / C10 auth contracts and **exits non-zero** on any
+  violation — as a recommended CI gate after `make deploy`.
+
+### Changed
+
+- **Bump the Forge control-plane and data-plane images to `0.21.1` by digest.** `.env.example`,
+  `compose.yaml`, `.env.prod.example`, and `compose.prod.yaml` now pin
+  `forge-control-plane:0.21.1@sha256:4635b861…` and `forge-data-plane:0.21.1@sha256:ab18a154…`,
+  replacing the `0.17.0` pins. Both planes move together, so a productionized clone never ships
+  mismatched control/data planes.
+- **Document the deploy drift-gate (P14).** `DEPLOY.md` now notes that `forge deploy` fails loudly when a
+  running container's image doesn't match the digest pinned in `compose.prod.yaml`/`app/.env.prod`, and
+  **force-recreates** on a pin change — so a deploy can't silently keep serving a stale image.
+
+### Fixed
+
+- **Carry the Forge CLI-wrapper fix (P16) so cloned apps aren't born broken.** The `./forge` wrapper now
+  launches the CLI as `tsx -- src/cli/index.ts "$@"` (note the **`--`**) instead of
+  `tsx src/cli/index.ts "$@"`. Without the separator, `tsx` hoisted a relative CLI flag (e.g.
+  `--env-file app/.env.prod`) into node and aborted `forge deploy` at startup; every clone inherits this
+  static wrapper, so the fix ships to new apps.
+
 ## [0.2.3] — 2026-07-08
 
 ### Changed
@@ -149,7 +184,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   service requires `--force`. Scope the old "re-pass every flag or lose services" warning to control
   planes older than `0.3.0`.
 
-[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/mardash-ai/forge-starter/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/mardash-ai/forge-starter/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/mardash-ai/forge-starter/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/mardash-ai/forge-starter/compare/v0.2.0...v0.2.1

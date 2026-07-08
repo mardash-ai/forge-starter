@@ -21,6 +21,8 @@ if ! docker compose ps --status=running --services 2>/dev/null | grep -qx api; t
   done
 fi
 
+# NOTE the `--` before the script: it stops tsx from hoisting a relative CLI flag
+# (e.g. `--env-file app/.env.prod`) into node, which aborts `forge deploy` at startup.
 exec docker compose exec -T \
   -e FORGE_API_URL="http://localhost:${PORT}" \
-  api ./node_modules/.bin/tsx src/cli/index.ts "$@"
+  api ./node_modules/.bin/tsx -- src/cli/index.ts "$@"

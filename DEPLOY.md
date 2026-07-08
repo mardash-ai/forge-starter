@@ -88,6 +88,11 @@ There is always ≥1 healthy backend → **no 502s**. A new replica that never g
 and the old keeps serving (automatic rollback → a `DeploymentRolledBack` fact). Each deploy is a
 `Deployment` resource — inspect it with `./forge inspect events`.
 
+> **Drift-gated (P14).** `forge deploy` fails loudly if a running container's image doesn't match the
+> digest pinned in `compose.prod.yaml`/`app/.env.prod`, and **force-recreates** on a pin change — so a
+> deploy can't silently keep serving a stale image. Keep the pins current by re-running
+> `forge productionize` (convergent) rather than hand-editing digests.
+
 > **Verify zero downtime:** probe the public URL *during* a deploy —
 > `while :; do curl -sf -o /dev/null https://$APP_HOST/api/health && printf . || printf X; sleep 0.2; done`
 > — every mark should be a `.`.
@@ -99,6 +104,34 @@ and the old keeps serving (automatic rollback → a `DeploymentRolledBack` fact)
 | `make deploy-logs` | tail all logs |
 | `make deploy-config` | validate `compose.prod.yaml` + `app/.env.prod` (no changes) |
 | `make deploy-down` | stop the stack, **keep** the data volumes |
+
+## 4. Verify the deploy (`forge verify`)
+
+Run the platform's post-deploy smoke check against the live host — a good **CI gate** to fail a
+release that came up wrong:
+
+```bash
+./forge verify --app <app> --host <your-domain>
+```
+
+`forge verify` asserts the running app honours the platform contracts (the `/api/health` **C6** health
+shape and, if the app declares auth, the **C10** `/auth/*` surface) and **exits non-zero** on any
+violation — so wiring it into your deploy pipeline after `make deploy` turns a broken rollout into a
+red build instead of a silent 200-that-isn't-really-healthy.
+
+## What your app gets for free (platform-served)
+
+These are served by the Forge platform for every productionized app — you don't build or maintain any
+of them; just know they exist and point at them.
+
+- **Public status page (C15).** The platform serves a Statuspage-style **`/status`** (HTML) and
+  **`/status.json`** for your host, aggregating the app's health. Link it from your app or share it as
+  the incident page. Opt into **uptime history** (a background sampler + a per-day timeline on the
+  page) by setting **`FORGE_STATUS_SAMPLE=1`** in `app/.env.prod`.
+- **App theming (C16).** Drop a **`forge.theme.json`** at the app root to brand **all**
+  platform-served UI — the sign-in pages *and* the status page — from one place. It becomes
+  `--forge-*` CSS tokens: set `colors{}` (and, for a pinned `mode: "dark"`, that palette is the whole
+  dark theme — no separate `dark{}` block needed). No theme file → the platform's neutral defaults.
 
 ## Deploying to a remote host
 

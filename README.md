@@ -91,6 +91,7 @@ skill for the full workflow.
 | Path | What it is |
 |---|---|
 | `app/` | **Your app** — the product. Created at `./app` by `./new-app` / `./forge init`. Commit it. |
+| `forge.theme.json` | *(optional)* Brand **all** platform-served UI (sign-in + the `/status` page) via `--forge-*` CSS tokens. Absent → neutral defaults. See [DEPLOY.md](DEPLOY.md). |
 | `specs/` | Feature specs — `specs/ADD_A_FEATURE.md` + `specs/<feature>/{FEATURE,DESIGN}.md`. |
 | `.forge/` | Forge's local Resource/Event/log store (gitignored). |
 | `.claude/skills/` | `add-a-feature`, `provision-app`, `frontend-design`. |
