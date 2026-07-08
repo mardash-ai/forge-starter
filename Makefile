@@ -39,8 +39,9 @@ pull:
 # --- Production deployment (compose.prod.yaml) -----------------------------
 # Zero-downtime is a PLATFORM capability — `forge deploy` (C7). `make deploy` ensures the control
 # plane is up, then rolls the public `web` service start-first (new replica up + healthy before
-# the old drains out of Traefik). Configure `app/.env.prod` from `.env.prod.example` first; see
-# DEPLOY.md. (`forge deploy` loads `app/.env.prod` by default; these plain-compose helpers pass it
+# the old drains out of Traefik). Configure `app/.env.prod` from the generated `app/.env.prod.example`
+# (follow `app/PROVISIONING.md`) first; see DEPLOY.md. (`forge deploy` loads `app/.env.prod` by
+# default; these plain-compose helpers pass it
 # via --env-file so they resolve the same APP_NAME/host/pins.)
 PROD := docker compose -f compose.prod.yaml --env-file app/.env.prod
 APP  ?= $(APP_NAME)

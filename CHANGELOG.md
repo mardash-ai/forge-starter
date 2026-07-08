@@ -20,6 +20,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.3] — 2026-07-08
+
+### Changed
+
+- **Bump the Forge control-plane and data-plane images to `0.17.0` by digest.** `.env.example`,
+  `compose.yaml`, `.env.prod.example`, and `compose.prod.yaml` now pin
+  `forge-control-plane:0.17.0@sha256:69fe7ea2…` and `forge-data-plane:0.17.0@sha256:465ae7cc…`,
+  replacing the `0.15.1` pins. Both planes move together, so a productionized clone never ships
+  mismatched control/data planes.
+- **Inherit the Forge operator-provisioning generator (C13) so cloned apps ship a per-app runbook.**
+  On control plane ≥ `0.17.0`, `forge productionize` now also generates an **annotated
+  `app/.env.prod.example`** (each secret prefixed with what it is, which capability needs it,
+  required/optional, how to obtain it, and a generate command) and a generated **`app/PROVISIONING.md`**
+  operator runbook — including an "Enabling a working sign-in method" section when the app declares
+  auth. `DEPLOY.md` now points operators at that generated pair (`forge productionize` → read
+  `app/PROVISIONING.md` → fill `app/.env.prod` → `forge deploy`) instead of hand-listing secrets that
+  would drift, and copies `app/.env.prod` from the generated `app/.env.prod.example`. The prior
+  productionize output (Dockerfile, `compose.prod.yaml`, `next.config.mjs`) is unchanged.
+- **Reframe the tracked root `.env.prod.example` as the pre-scaffold reference.** It carries the
+  `0.17.0` pins and now points at the generated `app/PROVISIONING.md` + annotated `app/.env.prod.example`
+  as the authoritative per-app runbook once `./app` exists; the `compose.prod.yaml` header hint and the
+  `Makefile` deploy comment reference the generated pair as well, so provisioning docs no longer
+  duplicate a secrets list the generator owns.
+
 ## [0.2.2] — 2026-07-07
 
 ### Changed
@@ -125,7 +149,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   service requires `--force`. Scope the old "re-pass every flag or lose services" warning to control
   planes older than `0.3.0`.
 
-[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.2.3...HEAD
+[0.2.3]: https://github.com/mardash-ai/forge-starter/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/mardash-ai/forge-starter/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/mardash-ai/forge-starter/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/mardash-ai/forge-starter/compare/v0.1.1...v0.2.0

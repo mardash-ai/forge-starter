@@ -28,7 +28,16 @@ persisted `infra` + `--host`, so nothing you didn't ask for is dropped):
 - `app/Dockerfile` + `app/.dockerignore` — the Next.js **standalone** image build.
 - `output: 'standalone'` in `app/next.config.mjs`.
 - `compose.prod.yaml` — Traefik-fronted `web` (health-gated) + data-plane + Postgres, all pinned by digest.
-- `.env.prod.example` — the env template you copy to `app/.env.prod` in step 2.
+- `app/.env.prod.example` — the **annotated** env template you copy to `app/.env.prod` in step 2.
+  Each secret is prefixed with a `#` comment: what it is, which capability needs it, whether it's
+  required or optional, how to obtain it, and a generate command where one applies.
+- `app/PROVISIONING.md` — a generated **operator runbook** for *this* app: exactly which secrets to
+  set and the `forge secrets set …` commands, plus an **"Enabling a working sign-in method"** section
+  (Google redirect URI + Google-vs-SMTP) when the app declares auth but hasn't valued Google/SMTP.
+  This is the source of truth for provisioning — it can't drift from the app the way a hand-kept list would.
+
+> **Control plane ≥ 0.17.0** generates the annotated `app/.env.prod.example` + `app/PROVISIONING.md`.
+> The Dockerfile / `compose.prod.yaml` / `next.config.mjs` output is byte-for-byte unchanged from before.
 
 - **Readiness path** *(you choose)* — the deploy roll gates on `--readiness-path` (default
   `GET /api/health` returning `200`). `./new-app` scaffolds a matching route; keep it cheap (no
@@ -38,19 +47,23 @@ persisted `infra` + `--host`, so nothing you didn't ask for is dropped):
 Commit the generated files. Pushing to `main` triggers [`ci.yml`](.github/workflows/ci.yml)
 (test + build) and [`publish-app.yml`](.github/workflows/publish-app.yml) (publishes
 `ghcr.io/<owner>/<repo>` multi-arch — the image you pass back as `--web-image`). When that published
-digest changes, **re-run `forge productionize`** to repin `compose.prod.yaml` / `.env.prod.example`;
+digest changes, **re-run `forge productionize`** to repin `compose.prod.yaml` / `app/.env.prod.example`;
 it's convergent, so it just updates the pin.
 
 ## 2. Configure (once per deploy host)
 
 ```bash
-cp .env.prod.example app/.env.prod && chmod 600 app/.env.prod
+cp app/.env.prod.example app/.env.prod && chmod 600 app/.env.prod
 ```
-`forge productionize` already pinned the image digests (`APP_IMAGE`, `FORGE_DATA_PLANE_IMAGE`,
-`FORGE_IMAGE`) into the generated `.env.prod.example`, so just set `APP_NAME`, `APP_HOST`, `DB_NAME`,
-`POSTGRES_PASSWORD`, and any secrets. You edit **only `app/.env.prod`** — a plain `forge deploy`
-loads it (its `--env-file` defaults to `app/.env.prod`), so `compose.prod.yaml` reads everything from
-it. To repin later, **re-run `forge productionize`** (convergent) rather than hand-editing digests.
+**Read [`app/PROVISIONING.md`](app/PROVISIONING.md) — the generated runbook — for exactly which
+values this app needs and how to obtain each.** Don't work from a hand-kept secrets list here; the
+runbook and the annotated `app/.env.prod.example` are generated from the app itself, so they always
+match it. `forge productionize` already pinned the image digests (`APP_IMAGE`, `FORGE_DATA_PLANE_IMAGE`,
+`FORGE_IMAGE`), so you only fill in identity (`APP_NAME`, `APP_HOST`, `DB_NAME`) and the secrets the
+runbook lists (e.g. `POSTGRES_PASSWORD`, and a working sign-in method if the app declares auth). You
+edit **only `app/.env.prod`** — a plain `forge deploy` loads it (its `--env-file` defaults to
+`app/.env.prod`), so `compose.prod.yaml` reads everything from it. To repin later, **re-run
+`forge productionize`** (convergent) rather than hand-editing digests.
 
 Prereqs on the host: **Docker**, a running **Traefik** stack that owns the external `proxy` network
 (or `up` fails *"network proxy not found"*), DNS for `APP_HOST` pointing at the host, and
