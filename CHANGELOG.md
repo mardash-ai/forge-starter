@@ -20,6 +20,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] — 2026-07-07
+
+### Changed
+
+- **Bump the Forge control-plane and data-plane images to `0.15.1` by digest.** `.env.example`,
+  `compose.yaml`, `.env.prod.example`, and `compose.prod.yaml` now pin
+  `forge-control-plane:0.15.1@sha256:925ffd09…` and `forge-data-plane:0.15.1@sha256:804f5c47…`,
+  replacing the `0.11.0` pins. This platform release fixes two deploy blockers that cloned apps
+  inherit through `forge init`: `forge deploy` defaults its `--env-file` to `app/.env.prod` (P10),
+  and the generated/scaffolded `app/next.config.mjs` **always** emits the `/auth/*` (data-plane)
+  rewrite — defaulted to `http://data-plane:3718` — so it survives `next build` into the production
+  image and `/auth/login` serves instead of 404ing (P11).
+- **Adopt the `app/.env.prod` production-env convention (P10).** `DEPLOY.md`, `.env.prod.example`,
+  the `compose.prod.yaml` header hint, and the `Makefile` deploy helpers now name `app/.env.prod` as
+  the file you copy the template to and that a plain `forge deploy` loads (its `--env-file` default),
+  replacing the old repo-root `.env`. The `make deploy-config` / `deploy-ps` / `deploy-down` helpers
+  pass `--env-file app/.env.prod` so plain-compose commands resolve the same `APP_NAME`, host, and
+  image pins as the deploy roll.
+
+### Fixed
+
+- **Ignore `app/.env.prod` so clones never commit production secrets.** With the prod env moving off
+  the (already-ignored) repo-root `.env` onto `app/.env.prod` (P10), a new `.gitignore` rule ignores
+  `.env.prod` while keeping the tracked `.env.prod.example` template.
+
 ## [0.2.1] — 2026-07-07
 
 ### Changed
@@ -100,7 +125,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   service requires `--force`. Scope the old "re-pass every flag or lose services" warning to control
   planes older than `0.3.0`.
 
-[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/mardash-ai/forge-starter/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/mardash-ai/forge-starter/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/mardash-ai/forge-starter/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/mardash-ai/forge-starter/compare/v0.1.0...v0.1.1

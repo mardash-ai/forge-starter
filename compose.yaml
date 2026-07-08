@@ -14,7 +14,7 @@ services:
   api:
     # Digest-pinned for reproducibility (R1) — this is the plane that ships `forge productionize`
     # / `forge deploy` (C8). Override FORGE_IMAGE in .env to run a different version.
-    image: ${FORGE_IMAGE:-ghcr.io/mardash-ai/forge-control-plane:0.11.0@sha256:50fa8aded311077cc2a4af6a2edd65bb15877564e3d50a71393658eca3ca74bc}
+    image: ${FORGE_IMAGE:-ghcr.io/mardash-ai/forge-control-plane:0.15.1@sha256:925ffd0981b7de0253c73615781a67ee68ba462e7206d30d381947ea034502d1}
     # Use a locally-present image if the registry copy isn't pulled yet.
     pull_policy: missing
     ports:

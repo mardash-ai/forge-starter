@@ -3,8 +3,9 @@
 # Forge `Deploy` capability: `make deploy` → `./forge deploy` rolls the public `web` service
 # start-first (new replica up + healthy before the old drains out of the proxy). See DEPLOY.md.
 #
-# This is env-parameterized: copy .env.prod.example → .env and set the values there — you should
-# not need to edit this file. Remove the `postgres` / `data-plane` services if your app doesn't
+# This is env-parameterized: copy .env.prod.example → app/.env.prod and set the values there (a plain
+# `forge deploy` loads it) — you should not need to edit this file. Remove the `postgres` /
+# `data-plane` services if your app doesn't
 # use them (and drop their env + `depends_on`).
 name: ${APP_NAME:-myapp}-prod
 
@@ -52,7 +53,7 @@ services:
   # Forge DATA-PLANE sidecar — the runtime capabilities the app needs (scheduler C2, secrets C5),
   # calling back into `web` over `internal`. Slim image, not exposed to Traefik. Remove if unused.
   data-plane:
-    image: ${FORGE_DATA_PLANE_IMAGE:-ghcr.io/mardash-ai/forge-data-plane:0.11.0@sha256:0528e92059e2871dc1382aa43fb0fb32979349e3d2d0b82b96fd17c7ba2dda89}
+    image: ${FORGE_DATA_PLANE_IMAGE:-ghcr.io/mardash-ai/forge-data-plane:0.15.1@sha256:804f5c4747844a6500a35461afd9e39ae2b0755675e4cdabfa5e0582348639fe}
     pull_policy: missing
     restart: unless-stopped
     environment:
