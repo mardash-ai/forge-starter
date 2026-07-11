@@ -1,165 +1,195 @@
 # Deploying your Forge app
 
 Your app runs in production as a **Next.js standalone container** behind a shared **Traefik** reverse
-proxy, optionally with a **Forge data-plane sidecar** (scheduler + secrets) and **Postgres**. It's
-deployed with **zero downtime** by the Forge **`Deploy` capability** — `make deploy` → `forge deploy`
-rolls the public `web` service *start-first* (a new replica comes up and passes health before the old
-one drains out of the proxy), so the site never loses its backend.
+proxy, alongside a **Forge data-plane sidecar** (scheduler + secrets + server sessions) and, when it
+has its own database, **Postgres**. It deploys with **zero downtime** via the Forge platform:
+`forge release` (which runs `forge deploy` under the hood) rolls the public `web` service *start-first*
+— a new replica comes up and passes health before the old one drains out of the proxy — so the site
+never loses its backend.
 
-> **You don't build on the host.** CI builds + publishes the image; the deploy host just pulls and
-> runs it. Zero-downtime is a **platform capability**, not a script in this repo — there is no
-> `rollout.sh` to maintain.
+> **You don't build on the host, and you don't hand-write the prod stack.** `forge productionize`
+> **generates** the production artifacts (Dockerfile + `app/compose.prod.yaml` + env template);
+> `forge release` publishes the image, repins, deploys, and verifies. Zero-downtime is a **platform
+> capability**, not a script in this repo — there is no `rollout.sh` to maintain.
 
-## 1. Productionize the app (once)
+## Layout (single-app)
 
-**Forge generates your production artifacts — you don't hand-stage them.** Once `./app` exists, run
-the **`Productionize` capability**:
+The Forge **control plane** runs at the repo **root** (`compose.yaml`, `FORGE_APP_LAYOUT=single`); your
+app lives under **`app/`**. The production stack is generated **into `app/`** (`app/compose.prod.yaml` +
+`app/.env.prod`) and resolved leniently from `app/forge.app.json`. There is no root-level prod compose
+file — it is superseded by the generated `app/compose.prod.yaml`.
+
+## 1. Provision (once)
+
+With the control plane up (`make up`), provision the app's platform infrastructure:
 
 ```bash
-./forge productionize --app <app> --host <your-domain> \
-  --web-image ghcr.io/<owner>/<repo>@sha256:<digest> \
-  [--data-plane-image ghcr.io/mardash-ai/forge-data-plane@sha256:<digest>] \
-  [--readiness-path /api/health]
+./forge provision --app <APP> --platform-store postgres --secret AUTH_SESSION_SECRET
 ```
 
-It emits — **digest-pinned** and **convergent** (safe to re-run: it reconciles from the app's
-persisted `infra` + `--host`, so nothing you didn't ask for is dropped):
+- `--platform-store postgres` gives the platform its own `forge_platform` Postgres database (for the
+  data-plane's state: scheduler, secrets, sessions), separate from any app database.
+- `--secret AUTH_SESSION_SECRET` declares the session-signing secret used by sign-in (**C10**) and
+  server-side sessions (**C23**).
+- Add **`--with-postgres`** if the app has its **own** application database (a second Postgres for your
+  app's data).
 
-- `app/Dockerfile` + `app/.dockerignore` — the Next.js **standalone** image build.
-- `output: 'standalone'` in `app/next.config.mjs`.
-- `compose.prod.yaml` — Traefik-fronted `web` (health-gated) + data-plane + Postgres, all pinned by digest.
-- `app/.env.prod.example` — the **annotated** env template you copy to `app/.env.prod` in step 2.
-  Each secret is prefixed with a `#` comment: what it is, which capability needs it, whether it's
-  required or optional, how to obtain it, and a generate command where one applies.
-- `app/PROVISIONING.md` — a generated **operator runbook** for *this* app: exactly which secrets to
-  set and the `forge secrets set …` commands, plus an **"Enabling a working sign-in method"** section
-  (Google redirect URI + Google-vs-SMTP) when the app declares auth but hasn't valued Google/SMTP.
-  This is the source of truth for provisioning — it can't drift from the app the way a hand-kept list would.
+`make provision` wraps this exact command.
 
-> **Control plane ≥ 0.17.0** generates the annotated `app/.env.prod.example` + `app/PROVISIONING.md`.
-> The Dockerfile / `compose.prod.yaml` / `next.config.mjs` output is byte-for-byte unchanged from before.
+## 2. Productionize (generates the prod stack)
 
-- **Readiness path** *(you choose)* — the deploy roll gates on `--readiness-path` (default
-  `GET /api/health` returning `200`). `./new-app` scaffolds a matching route; keep it cheap (no
-  external calls).
-- **Host rule** *(you choose)* — `--host` is the public hostname Traefik routes to this app.
+```bash
+./forge productionize --app <APP> --host <DOMAIN>
+```
 
-Commit the generated files. Pushing to `main` triggers [`ci.yml`](.github/workflows/ci.yml)
-(test + build) and [`publish-app.yml`](.github/workflows/publish-app.yml) (publishes
-`ghcr.io/<owner>/<repo>` multi-arch — the image you pass back as `--web-image`). When that published
-digest changes, **re-run `forge productionize`** to repin `compose.prod.yaml` / `app/.env.prod.example`;
-it's convergent, so it just updates the pin.
+It emits — **digest-pinned** and **convergent** (safe to re-run: it reconciles from the app's persisted
+`infra` + `--host`, so nothing you didn't ask for is dropped):
 
-## 2. Configure (once per deploy host)
+- `app/Dockerfile` + `app/.dockerignore` — the Next.js **standalone** image build; `output: 'standalone'`
+  in `app/next.config.mjs`.
+- **`app/compose.prod.yaml`** — the production stack: a Traefik-fronted, health-gated `web`; a **DB-aware**
+  Forge data-plane sidecar wired with **`FORGE_DB_URL`**; Postgres when the app has a database — all pinned
+  by digest. The compose **project name is `forge-<APP>-prod`**, which namespaces every container, network,
+  and volume (see *Multi-app isolation* below). Traefik routes **`Host(<DOMAIN>)`**.
+- **`app/.env.prod.example`** — the **annotated** env template (each secret prefixed with what it is, which
+  capability needs it, required/optional, how to obtain it, and a generate command).
+- **`app/PROVISIONING.md`** — a generated **operator runbook** for *this* app: exactly which secrets to set
+  and the `forge secrets set …` commands, plus an **"Enabling a working sign-in method"** section (Google
+  redirect URI + Google-vs-SMTP) when the app declares auth. This is the source of truth for provisioning
+  — it can't drift from the app the way a hand-kept list would.
+
+`make productionize` wraps this. Commit the generated files. (When your published app image digest later
+changes, `forge release` repins automatically; you can also re-run `forge productionize` — it's convergent.)
+
+## 3. Configure secrets (once per deploy host)
 
 ```bash
 cp app/.env.prod.example app/.env.prod && chmod 600 app/.env.prod
 ```
-**Read [`app/PROVISIONING.md`](app/PROVISIONING.md) — the generated runbook — for exactly which
-values this app needs and how to obtain each.** Don't work from a hand-kept secrets list here; the
-runbook and the annotated `app/.env.prod.example` are generated from the app itself, so they always
-match it. `forge productionize` already pinned the image digests (`APP_IMAGE`, `FORGE_DATA_PLANE_IMAGE`,
-`FORGE_IMAGE`), so you only fill in identity (`APP_NAME`, `APP_HOST`, `DB_NAME`) and the secrets the
-runbook lists (e.g. `POSTGRES_PASSWORD`, and a working sign-in method if the app declares auth). You
-edit **only `app/.env.prod`** — a plain `forge deploy` loads it (its `--env-file` defaults to
-`app/.env.prod`), so `compose.prod.yaml` reads everything from it. To repin later, **re-run
-`forge productionize`** (convergent) rather than hand-editing digests.
 
-Prereqs on the host: **Docker**, a running **Traefik** stack that owns the external `proxy` network
-(or `up` fails *"network proxy not found"*), DNS for `APP_HOST` pointing at the host, and
-`docker login ghcr.io` if your images are private.
+**Read [`app/PROVISIONING.md`](app/PROVISIONING.md) — the generated runbook — for exactly which values
+this app needs and how to obtain each.** You edit **only `app/.env.prod`** (gitignored); `forge release`
+loads it by default. The stable secret set for the deploy toolchain is:
 
-## 3. Deploy
+| Secret | What it is |
+|---|---|
+| `FORGE_SECRETS_KEY` | Master key for the platform/data-plane encrypted secret store — strong + **stable** (changing it makes stored secrets unreadable). |
+| `FORGE_PLATFORM_DB_PASSWORD` | Password for the separate `forge_platform` Postgres DB owned by `--platform-store=postgres`. |
+| `AUTH_SESSION_SECRET` | Session-signing secret for sign-in (**C10**) **and** server-side sessions (**C23**). Keep it **stable** — rotating it invalidates live sessions. |
+| `POSTGRES_PASSWORD` | Only if provisioned `--with-postgres` (the app's own application DB). |
+| Google / SMTP (optional) | Configure **one** working sign-in method — or none. See `app/PROVISIONING.md`. |
+
+> **C23 (server sessions) adds no new secret** — it reuses `AUTH_SESSION_SECRET`.
+
+Generate the random secrets with `openssl rand -hex 32`.
+
+Prereqs on the host: **Docker**, a running **Traefik** stack that owns the external `proxy` network (or
+`up` fails *"network proxy not found"*), DNS for `<DOMAIN>` pointing at the host, and `docker login
+ghcr.io` if your images are private.
+
+## 4. Release (deploy)
 
 ```bash
-make deploy
+make release        # ./forge release --app <APP> --host <DOMAIN>
 ```
 
-`make deploy` starts the Forge **control plane** transiently (`make up`) and runs
-**`./forge deploy --app <app> --proxy-net proxy`** — its `--env-file` defaults to `app/.env.prod`
-(the file you wrote in step 2), so no flag is needed. It:
+`forge release` runs the full pipeline and is **idempotent** — re-run it as often as you like:
 
-1. reconciles `postgres` / `data-plane` in place;
-2. brings up a **second `web`** on the new image alongside the old (Traefik health-gates it via the
-   `loadbalancer.healthcheck` labels, so it only takes traffic once `/api/health` passes);
-3. waits until it's healthy, then drains the old out of `proxy` and removes it.
+1. **assess** — what would change vs. what's running;
+2. **publish** — build + push the app image (multi-arch);
+3. **repin** — update the digest pins in `app/compose.prod.yaml` / `app/.env.prod`;
+4. **deploy** — the zero-downtime start-first roll (a second `web` comes up on the new image, Traefik
+   health-gates it via `/api/health`, then the old one drains out of `proxy` and is removed);
+5. **verify** — the post-deploy smoke check (below).
 
-There is always ≥1 healthy backend → **no 502s**. A new replica that never gets healthy is discarded
-and the old keeps serving (automatic rollback → a `DeploymentRolledBack` fact). Each deploy is a
-`Deployment` resource — inspect it with `./forge inspect events`.
+There is always ≥1 healthy backend → **no 502s**. A replica that never gets healthy is discarded and the
+old keeps serving (automatic rollback → a `DeploymentRolledBack` fact). Each deploy is a `Deployment`
+resource — inspect it with `./forge inspect events`.
 
 > **Drift-gated (P14).** `forge deploy` fails loudly if a running container's image doesn't match the
-> digest pinned in `compose.prod.yaml`/`app/.env.prod`, and **force-recreates** on a pin change — so a
-> deploy can't silently keep serving a stale image. Keep the pins current by re-running
-> `forge productionize` (convergent) rather than hand-editing digests.
+> digest pinned in `app/compose.prod.yaml`/`app/.env.prod`, and **force-recreates** on a pin change — so a
+> deploy can't silently keep serving a stale image.
 
-> **Verify zero downtime:** probe the public URL *during* a deploy —
-> `while :; do curl -sf -o /dev/null https://$APP_HOST/api/health && printf . || printf X; sleep 0.2; done`
+> **Verify zero downtime:** probe the public URL *during* a release —
+> `while :; do curl -sf -o /dev/null https://<DOMAIN>/api/health && printf . || printf X; sleep 0.2; done`
 > — every mark should be a `.`.
 
 | Command | What it does |
 |---|---|
-| `make deploy` | start control plane → `forge deploy` (reconcile deps → zero-downtime roll of `web`) |
-| `make deploy-ps` | container status |
-| `make deploy-logs` | tail all logs |
-| `make deploy-config` | validate `compose.prod.yaml` + `app/.env.prod` (no changes) |
+| `make release` / `make deploy` | `forge release` (assess → publish → repin → zero-downtime roll → verify) |
+| `make deploy-ps` | container status (`app/compose.prod.yaml`) |
+| `make deploy-logs` | tail all prod logs |
 | `make deploy-down` | stop the stack, **keep** the data volumes |
 
-## 4. Verify the deploy (`forge verify`)
+## 5. Verify a live deploy (`forge verify`)
 
-Run the platform's post-deploy smoke check against the live host — a good **CI gate** to fail a
-release that came up wrong:
+`forge release` verifies automatically; you can also run it standalone against the live host — a good CI
+gate to fail a release that came up wrong:
 
 ```bash
-./forge verify --app <app> --host <your-domain>
+./forge verify --app <APP> --host <DOMAIN>
 ```
 
-`forge verify` asserts the running app honours the platform contracts (the `/api/health` **C6** health
-shape and, if the app declares auth, the **C10** `/auth/*` surface) and **exits non-zero** on any
-violation — so wiring it into your deploy pipeline after `make deploy` turns a broken rollout into a
-red build instead of a silent 200-that-isn't-really-healthy.
+It asserts the running app honours the platform contracts (the `/api/health` **C6** health shape and, if
+the app declares auth, the **C10** `/auth/*` surface) and **exits non-zero** on any violation.
+
+## Multi-app isolation (many apps, one host)
+
+`forge productionize` names the prod compose project **`forge-<APP>-prod`**, which namespaces the
+containers, the `internal` network, and the named volumes (`postgres_data`, `forge_state`). So two apps
+deployed to the same host with **unique `<APP>` and `<DOMAIN>`** share **nothing** — the only shared thing
+is the **external `proxy` Traefik network** they both attach to for ingress. Deploy as many as the box
+holds; each is independent.
+
+> **Never `docker compose down -v` in prod** — that destroys the named data volumes (the database and the
+> secret vault). `make deploy-down` stops the stack and **keeps** them.
 
 ## What your app gets for free (platform-served)
 
-These are served by the Forge platform for every productionized app — you don't build or maintain any
-of them; just know they exist and point at them.
+Served by the Forge platform for every productionized app — you don't build or maintain any of them:
 
 - **Public status page (C15).** The platform serves a Statuspage-style **`/status`** (HTML) and
-  **`/status.json`** for your host, aggregating the app's health. Link it from your app or share it as
-  the incident page. Opt into **uptime history** (a background sampler + a per-day timeline on the
-  page) by setting **`FORGE_STATUS_SAMPLE=1`** in `app/.env.prod`.
-- **App theming (C16).** Drop a **`forge.theme.json`** at the app root to brand **all**
-  platform-served UI — the sign-in pages *and* the status page — from one place. It becomes
-  `--forge-*` CSS tokens: set `colors{}` (and, for a pinned `mode: "dark"`, that palette is the whole
-  dark theme — no separate `dark{}` block needed). No theme file → the platform's neutral defaults.
+  **`/status.json`** for your host. Opt into **uptime history** (a background sampler + a per-day timeline)
+  with **`FORGE_STATUS_SAMPLE=1`** in `app/.env.prod`.
+- **App theming (C16).** Drop a **`forge.theme.json`** at the app root to brand **all** platform-served UI
+  — the sign-in pages *and* the status page — via `--forge-*` CSS tokens. No theme file → neutral defaults.
+
+## Scheduled jobs
+
+The data-plane runs scheduled jobs declared in **`app/forge.jobs.json`** — a JSON array in the app dir —
+calling `http://web:3000<target_path>` on cadence. Create it alongside the app once it exposes the matching
+cron endpoints. Example:
+
+```json
+[
+  { "name": "reminders",        "every": "15m",     "target_path": "/api/cron/reminders",        "method": "POST" },
+  { "name": "nightly-finalize", "cron": "5 0 * * *", "target_path": "/api/cron/nightly-finalize", "method": "POST" }
+]
+```
 
 ## Deploying to a remote host
 
-`make deploy` deploys to **this machine's** Docker daemon. To deploy from your laptop to a remote
-box, either run `make deploy` **on the box** (SSH in — see the note below), or point `forge deploy`
-at a remote daemon with a Docker context:
+`make release` deploys to **this machine's** Docker daemon. To deploy from your laptop to a remote box,
+either run it **on the box** (SSH in), or point Forge at a remote daemon with a Docker context:
 
 ```bash
 docker context create prod --docker "host=ssh://user@your-box"
-./forge deploy --app <app> --context prod        # rolls the remote stack
+./forge release --app <APP> --host <DOMAIN> --context prod
 ```
 
-> **Remote note:** a `--context` deploy reads `compose.prod.yaml` + `app/.env.prod` locally but runs on the
-> remote daemon, so host **bind-mounts** (e.g. `deploy/jobs.json`) must exist at the same path on the
-> box — or drop them / use named volumes. Named volumes (`postgres_data`, `forge_state`) live on the
-> remote and persist across deploys. For a laptop-driven, SSH-key deploy convenience wrapper, add
-> your own `release/` scripts (gitignored — see `.gitignore`).
+> **Remote note:** a `--context` deploy reads `app/compose.prod.yaml` + `app/.env.prod` locally but runs
+> on the remote daemon, so any host **bind-mounts** must exist at the same path on the box (or drop them /
+> use named volumes). Named volumes (`postgres_data`, `forge_state`) live on the remote and persist across
+> deploys. For a laptop-driven, SSH-key deploy convenience wrapper, add your own `release/` scripts
+> (gitignored — see `.gitignore`).
 
 ## Notes that bite in real prod
 
-- **Traefik ingress, no host port.** `web` joins `proxy`; Traefik routes `APP_HOST` → the container
+- **Traefik ingress, no host port.** `web` joins `proxy`; Traefik routes `<DOMAIN>` → the container
   (`loadbalancer.server.port=3000`). The image sets `ENV HOSTNAME=0.0.0.0` (else 502) and ships `public/`.
-- **`FORGE_SECRETS_KEY` must be stable + durable** — it decrypts the data-plane's secret vault (in
-  the `forge_state` volume). Change it and stored secrets become unreadable.
-- **Data lives in named volumes** (`postgres_data`, `forge_state`). `make deploy-down` keeps them;
-  never `down -v` in prod.
-- **Scheduled jobs.** The data-plane registers jobs from [`deploy/jobs.json`](deploy/jobs.json) at
-  boot and calls `http://web:3000<target>` on cadence. Ships empty; add entries once the app exposes
-  the matching cron endpoints (see [`deploy/jobs.example.json`](deploy/jobs.example.json)).
-- **No app? No prod images.** CI + `make deploy` only do something once `app/` exists and
-  `forge productionize` has generated its `app/Dockerfile`.
+- **`FORGE_SECRETS_KEY` must be stable + durable** — it decrypts the data-plane's secret vault (in the
+  `forge_state` volume). Change it and stored secrets become unreadable.
+- **Data lives in named volumes** (`postgres_data`, `forge_state`). `make deploy-down` keeps them; never
+  `down -v` in prod.
+- **No app? No prod stack.** CI + `forge release` only do something once `app/` exists and
+  `forge productionize` has generated `app/Dockerfile` + `app/compose.prod.yaml`.

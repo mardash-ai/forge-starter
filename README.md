@@ -20,7 +20,11 @@ anything else.
 git clone https://github.com/mardash-ai/forge-starter my-project
 cd my-project
 
-# 2. Create a fully built, tested, linted app in one command:
+# 2. Set the control-plane secret key (REQUIRED — the platform won't start without it):
+cp .env.example .env
+# then edit .env and set FORGE_SECRETS_KEY (e.g. `openssl rand -hex 32`)
+
+# 3. Create a fully built, tested, linted app in one command:
 ./new-app my-app
 ```
 
@@ -114,5 +118,7 @@ make pull                    # update the control-plane image
 
 ## Running more than one project at once
 
-One Forge platform binds one port (default `3717`). To run a second project simultaneously,
-copy `.env.example` to `.env` and set a unique `FORGE_PORT`.
+Each clone is isolated by its **directory** — its own Compose project (containers + volumes), its
+own `./.forge` state, and its own `./app`. The dev control plane binds `127.0.0.1:3717`, so to run
+**two** projects at the same time, change the published port in one project's `compose.yaml`
+(`ports` and `PORT`) so they don't collide on `3717`.

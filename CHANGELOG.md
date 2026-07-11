@@ -20,6 +20,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-11
+
+Inherit the **Forge 0.35.0 deployable-consumer scaffolding** — **deploy toolchain only**. A full
+capability catch-up (C19 search, C20 notes/attachments, C23 server sessions, C29, …) is a separate
+later pass; this release brings only the deploy toolchain + single-app layout current.
+
+### Added
+
+- **Adopt the `forge release` deploy pipeline and its `Makefile` targets.** `make provision` /
+  `make productionize` / `make release` (aliased `make deploy`) now wrap
+  `./forge provision --app <APP> --platform-store postgres --secret AUTH_SESSION_SECRET`,
+  `./forge productionize --app <APP> --host <DOMAIN>`, and `./forge release --app <APP> --host <DOMAIN>`
+  (assess → publish → repin → zero-downtime deploy → verify; idempotent). `deploy-ps` / `deploy-logs` /
+  `deploy-down` operate on the generated `app/compose.prod.yaml`.
+
+### Changed
+
+- **Bump the Forge control-plane and data-plane images to `0.35.0`.** `compose.yaml` pins
+  `forge-control-plane:0.35.0` and passes `FORGE_DATA_PLANE_IMAGE=forge-data-plane:0.35.0` (replacing the
+  `0.21.1` digests), now sets `FORGE_PLATFORM_STORE=postgres`, **requires** `FORGE_SECRETS_KEY` (compose
+  refuses to start without it), forwards `GITHUB_TOKEN`, binds `127.0.0.1:3717`, and runs from
+  `working_dir: /forge`.
+- **Move the production stack under `app/` (single-app layout).** `forge productionize` now generates
+  `app/compose.prod.yaml` — prod compose project `forge-<APP>-prod`, which namespaces containers, network,
+  and volumes so multiple apps on one host share nothing but the external `proxy` Traefik network — with a
+  DB-aware data-plane sidecar wired via `FORGE_DB_URL` and Traefik `Host(<DOMAIN>)`, plus
+  `app/.env.prod.example` + `app/PROVISIONING.md`. `DEPLOY.md` documents the full
+  `provision → productionize → fill app/.env.prod → release` flow and the stable secret set
+  (`FORGE_SECRETS_KEY`, `FORGE_PLATFORM_DB_PASSWORD`, `AUTH_SESSION_SECRET` for **C10 and C23**, optional
+  `POSTGRES_PASSWORD` / Google / SMTP; C23 adds no new secret).
+- **Relocate scheduled jobs to `app/forge.jobs.json`.** The data-plane reads its cron jobs from a JSON
+  array in the app dir (was `deploy/jobs.json`); `DEPLOY.md` carries the example.
+- **Ignore single-app `app/` paths.** `.gitignore` now ignores `app/node_modules/`, `app/.next/`,
+  `app/next-env.d.ts`, `app/.env`, and `app/.env.prod` (replacing the `apps/*` plural pattern and the root
+  `.env.prod`); the control-plane `.env` (holding `FORGE_SECRETS_KEY`) and `release/` stay ignored.
+- **Update `.env.example` and the quickstart for the required control-plane key.** `.env.example` documents
+  `FORGE_SECRETS_KEY` (required) and optional `GITHUB_TOKEN`, dropping the retired `FORGE_IMAGE` /
+  `FORGE_PORT` overrides; `README.md` adds the `cp .env.example .env` + set-key step and corrects the
+  run-two-projects-at-once note. The root `.env.prod.example` is reframed as a pre-scaffold reference that
+  points at the generated `app/.env.prod.example` + `app/PROVISIONING.md`.
+
+### Removed
+
+- **The stale root `compose.prod.yaml` and the `deploy/` directory.** The production compose file is now
+  generated into `app/` by `forge productionize`, and scheduled jobs moved to `app/forge.jobs.json`, so the
+  hand-maintained root prod compose and `deploy/jobs.json` / `deploy/jobs.example.json` are gone.
+
+### Fixed
+
+- **Carry the Forge CLI-wrapper fixes (P16 / P20 / P22) into `./forge`.** The wrapper starts only the `api`
+  service, polls `http://127.0.0.1:3717/health` for readiness (P20 loopback, P22 readiness poll), and
+  launches `tsx -- src/cli/index.ts` (the P16 `--`, so a relative `--env-file` is not hoisted into node and
+  cannot abort the CLI at startup).
+
 ## [0.3.0] — 2026-07-08
 
 ### Added
@@ -184,7 +238,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   service requires `--force`. Scope the old "re-pass every flag or lose services" warning to control
   planes older than `0.3.0`.
 
-[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/mardash-ai/forge-starter/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/mardash-ai/forge-starter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/mardash-ai/forge-starter/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/mardash-ai/forge-starter/compare/v0.2.2...v0.2.3
 [0.2.2]: https://github.com/mardash-ai/forge-starter/compare/v0.2.1...v0.2.2

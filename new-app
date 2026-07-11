@@ -15,8 +15,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Load .env (e.g. FORGE_SECRETS_KEY, required by the control plane) into the environment.
 if [ -f .env ]; then set -a; . ./.env; set +a; fi
-PORT="${FORGE_PORT:-3717}"
+PORT=3717   # the control plane binds 127.0.0.1:3717 (see compose.yaml)
 
 # ── args ────────────────────────────────────────────────────────────────────
 APP="${1:-}"; shift || true

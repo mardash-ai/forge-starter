@@ -1,16 +1,17 @@
 # Forge platform state (Resources, Events, logs) — regenerable, local.
 .forge/
 
-# App build artifacts and dependencies (installed into Docker volumes anyway).
-apps/*/node_modules/
-apps/*/.next/
-apps/*/next-env.d.ts
+# App build artifacts, dependencies, and local env (single-app layout: the app is ./app).
+app/node_modules/
+app/.next/
+app/next-env.d.ts
+app/.env
+# Production secrets live in app/.env.prod (loaded by `forge release`/`forge deploy`); never commit it.
+# (app/.env.prod.example is the generated, tracked template — it does not match this pattern.)
+app/.env.prod
 
-# Local overrides
+# Local control-plane overrides (e.g. FORGE_SECRETS_KEY, GITHUB_TOKEN). Never commit it.
 .env
-# Production secrets live in app/.env.prod (loaded by `forge deploy`); never commit it.
-# (`.env.prod.example` is the tracked template — it does not match this pattern.)
-.env.prod
 *.log
 
 # Operator-local deploy transport (e.g. SSH wrappers that may hold a key passphrase).

@@ -1,37 +1,37 @@
-# (Compose project name defaults to this directory's name, so each Builder
-#  project gets its own isolated Forge control-plane instance.)
-
-# The Forge CONTROL PLANE runs as a prebuilt image. This starter has no platform
-# source of its own — it just points the control plane at THIS directory as the
-# workspace and hands it the host Docker socket so Capabilities can run app work
-# in Docker (Docker-out-of-Docker).
+# Forge CONTROL PLANE (developer/orchestration runtime), single-app layout.
 #
-# This is the control plane (developer/orchestration) image — it carries the
-# Forge runtime + Docker CLI. It is deliberately separate from the future Forge
-# DATA PLANE image (production/deploy runtime), which will NOT ship developer
-# dependencies.
+# (No explicit `name:` — the Compose project name defaults to THIS directory's
+#  name, so every clone gets its own isolated control-plane instance. The
+#  canonical scaffolding names it `<APP>-forge`; a template clone inherits the
+#  directory name instead, which does the same isolation without a placeholder.)
+#
+# This starter has no platform source of its own — it points the control plane at
+# THIS directory as the workspace (the app lives under ./app,
+# FORGE_APP_LAYOUT=single) and hands it the host Docker socket so Capabilities can
+# run app work in Docker (Docker-out-of-Docker). The control-plane image carries the
+# Forge runtime + Docker CLI; the slimmer DATA PLANE image is used for production.
+#
+# FORGE_SECRETS_KEY is REQUIRED (compose refuses to start without it) — set it in a
+# local, gitignored `.env` (docker compose auto-loads it); see `.env.example`.
 services:
   api:
-    # Digest-pinned for reproducibility (R1) — this is the plane that ships `forge productionize`
-    # / `forge deploy` (C8). Override FORGE_IMAGE in .env to run a different version.
-    image: ${FORGE_IMAGE:-ghcr.io/mardash-ai/forge-control-plane:0.21.1@sha256:4635b8616a8fcda65a704b29bc2ffd06158a77f387d6488cf17702c47c80fb9b}
-    # Use a locally-present image if the registry copy isn't pulled yet.
-    pull_policy: missing
-    ports:
-      - "${FORGE_PORT:-3717}:${FORGE_PORT:-3717}"
+    image: ghcr.io/mardash-ai/forge-control-plane:0.35.0
+    ports: ["127.0.0.1:3717:3717"]
     environment:
-      - PORT=${FORGE_PORT:-3717}
-      # This project directory IS the Forge workspace. Every repo is a SINGLE
-      # app: it lives at ./app (FORGE_APP_LAYOUT=single); Resource/Event state
-      # lives in ./.forge.
+      - PORT=3717
+      - FORGE_APP_LAYOUT=single
       - FORGE_WORKSPACE=${PWD}
       - FORGE_STATE_DIR=${PWD}/.forge
-      - FORGE_APP_LAYOUT=single
+      - FORGE_SECRETS_KEY=${FORGE_SECRETS_KEY:?set FORGE_SECRETS_KEY in the control-plane env}
+      - FORGE_DATA_PLANE_IMAGE=ghcr.io/mardash-ai/forge-data-plane:0.35.0
+      - FORGE_PLATFORM_STORE=postgres
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     volumes:
-      # Talk to the host Docker daemon.
+      # Talk to the host Docker daemon (Docker-out-of-Docker).
       - /var/run/docker.sock:/var/run/docker.sock
       # Mount this project at the SAME absolute path host==container so nested
       # `docker compose` (run by Capabilities) resolves app bind-mounts on the
       # host daemon. Do not change this symmetry.
       - ${PWD}:${PWD}
+    working_dir: /forge
     restart: unless-stopped
