@@ -1,0 +1,124 @@
+{
+  "recorded_at": "2026-09-04T14:55:00Z",
+  "forge_tag": "1.55.0",
+  "command": "./new-app hello --with-postgres --dev",
+  "hops": [
+    {
+      "step": 1,
+      "label": "platform",
+      "action": "docker compose up -d (if not running) + health poll",
+      "outcome": "up",
+      "observed": "Control plane healthy at http://localhost:3717 (container-internal check via forge script)"
+    },
+    {
+      "step": 2,
+      "label": "init",
+      "command": "./forge init app --name hello --platform web --framework nextjs",
+      "response": {
+        "resource": "app_b6ec91cf0a8e4e94a523",
+        "type": "Application",
+        "name": "hello",
+        "platform": "web",
+        "framework": "nextjs",
+        "repo_path": "/Users/mbonano/projects/forge-starter/app",
+        "suggested_next": "forge provision --app hello"
+      },
+      "status": "succeeded"
+    },
+    {
+      "step": 3,
+      "label": "provision",
+      "command": "./forge provision --app hello --with-postgres",
+      "response": {
+        "resource": "env_d95829a8c394403495fe",
+        "status": "provisioned",
+        "services": ["web", "postgres"],
+        "ports": { "web": 3000, "postgres": 5432 },
+        "suggested_next": "forge install --app <app>"
+      },
+      "status": "succeeded",
+      "note": "Generates app/compose.yaml with web + postgres services. On this machine host port 5432 was occupied; app/compose.yaml was adjusted to host-bind postgres on 5433 before starting the dev server (transparent on a clean machine)."
+    },
+    {
+      "step": 4,
+      "label": "install",
+      "command": "./forge install --app hello",
+      "response": {
+        "resource": "dep_e13a792202044fb492c9",
+        "status": "succeeded",
+        "summary": "Installed dependencies (371 packages) in 24.0s.",
+        "log_ref": ".forge/logs/dep_e13a792202044fb492c9.log",
+        "suggested_next": "forge build --app <app>"
+      },
+      "status": "succeeded"
+    },
+    {
+      "step": 5,
+      "label": "build",
+      "command": "./forge build --app hello",
+      "response": {
+        "resource": "build_49e1e56a0b3c4694818f",
+        "status": "succeeded",
+        "duration_ms": 6230,
+        "artifact_refs": [".next"],
+        "log_ref": ".forge/logs/build_49e1e56a0b3c4694818f.log",
+        "suggested_next": "forge test --app <app>"
+      },
+      "status": "succeeded"
+    },
+    {
+      "step": 6,
+      "label": "test",
+      "command": "./forge test --app hello",
+      "response": {
+        "resource": "test_357c9b1994824b2b84ff",
+        "status": "succeeded",
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "log_ref": ".forge/logs/test_357c9b1994824b2b84ff.log",
+        "suggested_next": "forge lint --app <app>"
+      },
+      "status": "succeeded"
+    },
+    {
+      "step": 7,
+      "label": "lint",
+      "command": "./forge lint --app hello",
+      "response": {
+        "resource": "check_d91a60aed2f045b28ef5",
+        "status": "succeeded",
+        "problems": 0,
+        "summary": "No ESLint errors.",
+        "log_ref": ".forge/logs/check_d91a60aed2f045b28ef5.log",
+        "suggested_next": "forge build --app <app>"
+      },
+      "status": "succeeded"
+    },
+    {
+      "step": 8,
+      "label": "dev",
+      "command": "./forge dev --app hello",
+      "response": {
+        "resource": "dev_5560356440294abf8672",
+        "status": "running",
+        "url": "http://localhost:3000",
+        "health": "starting",
+        "container_id": "47c8cd4bdb92"
+      },
+      "status": "succeeded"
+    },
+    {
+      "step": 9,
+      "label": "health",
+      "action": "curl http://localhost:3000/api/health",
+      "response": {
+        "status": "ok",
+        "service": "hello",
+        "time": "2026-09-04T14:59:03.212Z",
+        "checks": []
+      },
+      "status": "succeeded"
+    }
+  ]
+}

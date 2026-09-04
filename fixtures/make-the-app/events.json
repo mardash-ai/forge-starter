@@ -1,0 +1,103 @@
+{
+  "recorded_at": "2026-09-04T14:59:30Z",
+  "forge_tag": "1.55.0",
+  "source": "./forge inspect events --app hello",
+  "raw": {
+    "resource": "insp_dba39f5e2d434f0aa807",
+    "inspection_type": "events",
+    "summary": "15 recent event(s) for hello.",
+    "data": [
+      {
+        "id": "evt_7eb0625ae3b8486eb4c9",
+        "type": "DevServerStarted",
+        "resource_id": "dev_5560356440294abf8672",
+        "at": "2026-09-04T14:58:58.691Z"
+      },
+      {
+        "id": "evt_6458ba13f32a4b5594d3",
+        "type": "InspectionCreated",
+        "resource_id": "insp_2c4164e081fb40918f94",
+        "at": "2026-09-04T14:58:20.165Z"
+      },
+      {
+        "id": "evt_350dae57e441400086d8",
+        "type": "AnalysisCreated",
+        "resource_id": "analysis_df0981435a104f15a612",
+        "at": "2026-09-04T14:57:48.488Z"
+      },
+      {
+        "id": "evt_ea0a70fe7f9a4458bb96",
+        "type": "DevServerStarted",
+        "resource_id": "dev_2fc79f8a34b44f648031",
+        "at": "2026-09-04T14:57:38.534Z",
+        "note": "First dev attempt — failed (port 5432 occupied on this machine); succeeded on second attempt after port-binding adjustment"
+      },
+      {
+        "id": "evt_dfd088ad1cf747aca93d",
+        "type": "CheckRunSucceeded",
+        "resource_id": "check_d91a60aed2f045b28ef5",
+        "at": "2026-09-04T14:57:29.400Z"
+      },
+      {
+        "id": "evt_5029d4c703f243eca527",
+        "type": "CheckRunStarted",
+        "resource_id": "check_d91a60aed2f045b28ef5",
+        "at": "2026-09-04T14:57:28.158Z"
+      },
+      {
+        "id": "evt_f7d773b207eb403cab91",
+        "type": "TestRunSucceeded",
+        "resource_id": "test_357c9b1994824b2b84ff",
+        "at": "2026-09-04T14:57:19.342Z"
+      },
+      {
+        "id": "evt_4c5cbb6c2ca84d91bfb3",
+        "type": "TestRunStarted",
+        "resource_id": "test_357c9b1994824b2b84ff",
+        "at": "2026-09-04T14:57:18.588Z"
+      },
+      {
+        "id": "evt_5683b4cbfdd645dc8743",
+        "type": "BuildSucceeded",
+        "resource_id": "build_49e1e56a0b3c4694818f",
+        "at": "2026-09-04T14:57:09.984Z"
+      },
+      {
+        "id": "evt_5c83e349fb2346c983ca",
+        "type": "BuildStarted",
+        "resource_id": "build_49e1e56a0b3c4694818f",
+        "at": "2026-09-04T14:57:03.752Z"
+      },
+      {
+        "id": "evt_44504126380e42af82f4",
+        "type": "DependenciesInstalled",
+        "resource_id": "dep_e13a792202044fb492c9",
+        "at": "2026-09-04T14:56:54.063Z"
+      },
+      {
+        "id": "evt_9e49c0fc7cdd42f695b6",
+        "type": "InspectionCreated",
+        "resource_id": "insp_53202093a10f48499b75",
+        "at": "2026-09-04T14:55:59.499Z"
+      },
+      {
+        "id": "evt_73497bed0a224a2f9283",
+        "type": "InspectionCreated",
+        "resource_id": "insp_00b664b9d9f44398845b",
+        "at": "2026-09-04T14:55:43.615Z"
+      },
+      {
+        "id": "evt_f9ae7a93087344f38e74",
+        "type": "EnvironmentProvisioned",
+        "resource_id": "env_d95829a8c394403495fe",
+        "at": "2026-09-04T14:55:21.376Z"
+      },
+      {
+        "id": "evt_61e71536f2f14ff8a73d",
+        "type": "ApplicationInitialized",
+        "resource_id": "app_b6ec91cf0a8e4e94a523",
+        "at": "2026-09-04T14:55:12.572Z"
+      }
+    ]
+  }
+}

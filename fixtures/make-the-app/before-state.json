@@ -1,0 +1,22 @@
+{
+  "description": "State of the forge-starter repo before ./new-app hello --with-postgres --dev was run",
+  "recorded_at": "2026-09-04T14:55:00Z",
+  "forge_tag": "1.55.0",
+  "environment": {
+    "forge_control_plane_image": "ghcr.io/mardash-ai/forge-control-plane:1.55.0",
+    "forge_data_plane_image": "ghcr.io/mardash-ai/forge-data-plane:1.55.0",
+    "FORGE_SECRETS_KEY": "[REDACTED — set via .env, never echoed]",
+    "platform_status": "not running (started automatically by ./new-app)"
+  },
+  "repo": {
+    "app_directory": "absent — no ./app directory exists",
+    "forge_state": "absent — no .forge directory",
+    "applications": []
+  },
+  "preconditions": [
+    "git clone of forge-starter completed",
+    "FORGE_SECRETS_KEY exported (or placed in .env)",
+    "Docker available on host",
+    "No prior forge platform running for this workspace"
+  ]
+}
