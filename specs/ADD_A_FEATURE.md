@@ -12,8 +12,8 @@ Drop a short spec in `specs/<feature-slug>/FEATURE.md` (template below) and tell
 Claude runs the **`add-a-feature` skill**, which is the source of truth for the whole
 workflow. It will:
 
-1. Firm up the spec (only asking about hard-to-reverse choices, like *must this data survive
-   a restart?*).
+1. Firm up the spec (only asking about hard-to-reverse choices, like _must this data survive
+   a restart?_).
 2. **Design first** for any UI — produce a `DESIGN.md` via the `frontend-design` skill, and
    often an interactive mockup for you to approve — before writing components.
 3. Implement under `./app` (logic in `app/lib/`, pages in `app/app/`, tests in `app/tests/`).
@@ -32,13 +32,16 @@ Only **Goal** and **Acceptance criteria** are required. Everything else sharpens
 # Feature: <short name>
 
 ## Goal
+
 <1–2 sentences: what a user can do, and why.>
 
 ## Acceptance criteria
+
 - [ ] <observable behavior you could check by hand>
 - [ ] <...>
 
 ## Details (optional — include only what matters)
+
 - Routes/pages: <e.g. /tasks page; GET & POST /api/tasks>
 - Data: <entities + fields; say if it must persist across restarts>
 - Non-goals: <what NOT to build>
@@ -57,9 +60,11 @@ The minimum that still builds — a Goal and one checkable criterion:
 # Feature: About page
 
 ## Goal
+
 Visitors can read a short "About" page describing what this app does.
 
 ## Acceptance criteria
+
 - [ ] Visiting /about shows a heading and a paragraph of descriptive text.
 ```
 
@@ -68,6 +73,6 @@ and confirms the route with `./forge inspect routes`. No test is needed for stat
 
 ---
 
-*The full procedure, conventions, and persistence patterns live in the `add-a-feature`
+_The full procedure, conventions, and persistence patterns live in the `add-a-feature`
 skill (`.claude/skills/add-a-feature/SKILL.md`) — that's the authoritative reference; this
-page is just the human-facing entry point.*
+page is just the human-facing entry point._

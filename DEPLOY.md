@@ -3,7 +3,7 @@
 Your app runs in production as a **Next.js standalone container** behind a shared **Traefik** reverse
 proxy, alongside a **Forge data-plane sidecar** (scheduler + secrets + server sessions) and, when it
 has its own database, **Postgres**. It deploys with **zero downtime** via the Forge platform:
-`forge release` (which runs `forge deploy` under the hood) rolls the public `web` service *start-first*
+`forge release` (which runs `forge deploy` under the hood) rolls the public `web` service _start-first_
 — a new replica comes up and passes health before the old one drains out of the proxy — so the site
 never loses its backend.
 
@@ -50,10 +50,10 @@ It emits — **digest-pinned** and **convergent** (safe to re-run: it reconciles
 - **`app/compose.prod.yaml`** — the production stack: a Traefik-fronted, health-gated `web`; a **DB-aware**
   Forge data-plane sidecar wired with **`FORGE_DB_URL`**; Postgres when the app has a database — all pinned
   by digest. The compose **project name is `forge-<APP>-prod`**, which namespaces every container, network,
-  and volume (see *Multi-app isolation* below). Traefik routes **`Host(<DOMAIN>)`**.
+  and volume (see _Multi-app isolation_ below). Traefik routes **`Host(<DOMAIN>)`**.
 - **`app/.env.prod.example`** — the **annotated** env template (each secret prefixed with what it is, which
   capability needs it, required/optional, how to obtain it, and a generate command).
-- **`app/PROVISIONING.md`** — a generated **operator runbook** for *this* app: exactly which secrets to set
+- **`app/PROVISIONING.md`** — a generated **operator runbook** for _this_ app: exactly which secrets to set
   and the `forge secrets set …` commands, plus an **"Enabling a working sign-in method"** section (Google
   redirect URI + Google-vs-SMTP) when the app declares auth. This is the source of truth for provisioning
   — it can't drift from the app the way a hand-kept list would.
@@ -71,20 +71,20 @@ cp app/.env.prod.example app/.env.prod && chmod 600 app/.env.prod
 this app needs and how to obtain each.** You edit **only `app/.env.prod`** (gitignored); `forge release`
 loads it by default. The stable secret set for the deploy toolchain is:
 
-| Secret | What it is |
-|---|---|
-| `FORGE_SECRETS_KEY` | Master key for the platform/data-plane encrypted secret store — strong + **stable** (changing it makes stored secrets unreadable). |
-| `FORGE_PLATFORM_DB_PASSWORD` | Password for the separate `forge_platform` Postgres DB owned by `--platform-store=postgres`. |
-| `AUTH_SESSION_SECRET` | Session-signing secret for sign-in (**C10**) **and** server-side sessions (**C23**). Keep it **stable** — rotating it invalidates live sessions. |
-| `POSTGRES_PASSWORD` | Only if provisioned `--with-postgres` (the app's own application DB). |
-| Google / SMTP (optional) | Configure **one** working sign-in method — or none. See `app/PROVISIONING.md`. |
+| Secret                       | What it is                                                                                                                                       |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `FORGE_SECRETS_KEY`          | Master key for the platform/data-plane encrypted secret store — strong + **stable** (changing it makes stored secrets unreadable).               |
+| `FORGE_PLATFORM_DB_PASSWORD` | Password for the separate `forge_platform` Postgres DB owned by `--platform-store=postgres`.                                                     |
+| `AUTH_SESSION_SECRET`        | Session-signing secret for sign-in (**C10**) **and** server-side sessions (**C23**). Keep it **stable** — rotating it invalidates live sessions. |
+| `POSTGRES_PASSWORD`          | Only if provisioned `--with-postgres` (the app's own application DB).                                                                            |
+| Google / SMTP (optional)     | Configure **one** working sign-in method — or none. See `app/PROVISIONING.md`.                                                                   |
 
 > **C23 (server sessions) adds no new secret** — it reuses `AUTH_SESSION_SECRET`.
 
 Generate the random secrets with `openssl rand -hex 32`.
 
 Prereqs on the host: **Docker**, a running **Traefik** stack that owns the external `proxy` network (or
-`up` fails *"network proxy not found"*), DNS for `<DOMAIN>` pointing at the host, and `docker login
+`up` fails _"network proxy not found"_), DNS for `<DOMAIN>` pointing at the host, and `docker login
 ghcr.io` if your images are private.
 
 ## 4. Release (deploy)
@@ -110,16 +110,16 @@ resource — inspect it with `./forge inspect events`.
 > digest pinned in `app/compose.prod.yaml`/`app/.env.prod`, and **force-recreates** on a pin change — so a
 > deploy can't silently keep serving a stale image.
 
-> **Verify zero downtime:** probe the public URL *during* a release —
+> **Verify zero downtime:** probe the public URL _during_ a release —
 > `while :; do curl -sf -o /dev/null https://<DOMAIN>/api/health && printf . || printf X; sleep 0.2; done`
 > — every mark should be a `.`.
 
-| Command | What it does |
-|---|---|
+| Command                        | What it does                                                             |
+| ------------------------------ | ------------------------------------------------------------------------ |
 | `make release` / `make deploy` | `forge release` (assess → publish → repin → zero-downtime roll → verify) |
-| `make deploy-ps` | container status (`app/compose.prod.yaml`) |
-| `make deploy-logs` | tail all prod logs |
-| `make deploy-down` | stop the stack, **keep** the data volumes |
+| `make deploy-ps`               | container status (`app/compose.prod.yaml`)                               |
+| `make deploy-logs`             | tail all prod logs                                                       |
+| `make deploy-down`             | stop the stack, **keep** the data volumes                                |
 
 ## 5. Verify a live deploy (`forge verify`)
 
@@ -152,7 +152,7 @@ Served by the Forge platform for every productionized app — you don't build or
   **`/status.json`** for your host. Opt into **uptime history** (a background sampler + a per-day timeline)
   with **`FORGE_STATUS_SAMPLE=1`** in `app/.env.prod`.
 - **App theming (C16).** Drop a **`forge.theme.json`** at the app root to brand **all** platform-served UI
-  — the sign-in pages *and* the status page — via `--forge-*` CSS tokens. No theme file → neutral defaults.
+  — the sign-in pages _and_ the status page — via `--forge-*` CSS tokens. No theme file → neutral defaults.
 
 ## Scheduled jobs
 
@@ -162,8 +162,18 @@ cron endpoints. Example:
 
 ```json
 [
-  { "name": "reminders",        "every": "15m",     "target_path": "/api/cron/reminders",        "method": "POST" },
-  { "name": "nightly-finalize", "cron": "5 0 * * *", "target_path": "/api/cron/nightly-finalize", "method": "POST" }
+  {
+    "name": "reminders",
+    "every": "15m",
+    "target_path": "/api/cron/reminders",
+    "method": "POST"
+  },
+  {
+    "name": "nightly-finalize",
+    "cron": "5 0 * * *",
+    "target_path": "/api/cron/nightly-finalize",
+    "method": "POST"
+  }
 ]
 ```
 

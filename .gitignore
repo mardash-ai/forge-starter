@@ -17,3 +17,11 @@ app/.env.prod
 # Operator-local deploy transport (e.g. SSH wrappers that may hold a key passphrase).
 # Keep these OUT of the repo — see DEPLOY.md → "Deploying to a remote host".
 /release/
+
+# Starter model diff outputs — generated at release time by the release workflow.
+# Not committed; attached as assets to the GitHub Release instead.
+starter-changes.json
+starter-changes.md
+
+# Prettier-formatted temporary test scratch dir
+.tmp-test-diff/

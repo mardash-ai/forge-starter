@@ -23,12 +23,12 @@ creates it.
 
 ## Files in this directory
 
-| File | Contents |
-|---|---|
-| `hops.json` | Each step of the runbook (label, command, raw forge response, status) |
-| `events.json` | Full forge event timeline — `./forge inspect events --app hello` output |
-| `before-state.json` | Repo / platform state before the run (clean clone, no app) |
-| `after-state.json` | Final observed state: app inspect, docker inspect, dev status, health check |
+| File                | Contents                                                                    |
+| ------------------- | --------------------------------------------------------------------------- |
+| `hops.json`         | Each step of the runbook (label, command, raw forge response, status)       |
+| `events.json`       | Full forge event timeline — `./forge inspect events --app hello` output     |
+| `before-state.json` | Repo / platform state before the run (clean clone, no app)                  |
+| `after-state.json`  | Final observed state: app inspect, docker inspect, dev status, health check |
 
 ## Quickstart summary (observed)
 

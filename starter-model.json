@@ -1,0 +1,131 @@
+{
+  "$schema": "https://forge.build/starter-model/v1",
+  "version": "0.1.0",
+  "images": {
+    "controlPlane": "ghcr.io/mardash-ai/forge-control-plane:1.55.0",
+    "dataPlane": "ghcr.io/mardash-ai/forge-data-plane:1.55.0"
+  },
+  "skills": [
+    {
+      "name": "add-a-feature",
+      "description": "Add or evolve a feature in this repo's single app (at ./app) using the spec-driven, design-first Forge workflow. Use whenever the human asks to add/build/implement a feature, capability, page, or API in the app. You write a short FEATURE spec (and a DESIGN spec for UI), implement under ./app following Forge conventions, validate in Docker via ./forge, and verify the behavior end-to-end. This skill is the source of truth for how features are built here.",
+      "forgeMapping": [
+        {
+          "capability": "build",
+          "command": "./forge build --app <name>"
+        },
+        {
+          "capability": "dev",
+          "command": "./forge dev --app <name>"
+        },
+        {
+          "capability": "explain",
+          "command": "./forge explain --resource <id>"
+        },
+        {
+          "capability": "inspect",
+          "command": "./forge inspect routes --app <name>"
+        },
+        {
+          "capability": "install",
+          "command": "./forge install"
+        },
+        {
+          "capability": "lint",
+          "command": "./forge lint --app <name>"
+        },
+        {
+          "capability": "plan",
+          "command": "./forge plan --app <name> --goal \"…\""
+        },
+        {
+          "capability": "provision",
+          "command": "./forge provision --app <name> --with-postgres"
+        },
+        {
+          "capability": "test",
+          "command": "./forge test --app <name>"
+        }
+      ]
+    },
+    {
+      "name": "frontend-design",
+      "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.",
+      "forgeMapping": []
+    },
+    {
+      "name": "provision-app",
+      "description": "Create and validate this repo's single Dockerized web app through the Forge platform, and run the build/test/lint mechanics for it. Use whenever the human asks to scaffold/create the app, or wants a change actually initialized, installed, built, tested, and linted. Everything runs in Docker via ./forge. For the spec-driven, design-first authoring of a feature, use the add-a-feature skill (this skill is the mechanics it calls).",
+      "forgeMapping": [
+        {
+          "capability": "build",
+          "command": "./forge build --app \"$APP\""
+        },
+        {
+          "capability": "dev",
+          "command": "./forge dev --app \"$APP\""
+        },
+        {
+          "capability": "explain",
+          "command": "./forge explain --resource <RESOURCE_ID>"
+        },
+        {
+          "capability": "init",
+          "command": "./forge init app --name \"$APP\" --platform web --framework nextjs"
+        },
+        {
+          "capability": "inspect",
+          "command": "./forge inspect app --app \"$APP\""
+        },
+        {
+          "capability": "install",
+          "command": "./forge install --app \"$APP\""
+        },
+        {
+          "capability": "lint",
+          "command": "./forge lint --app \"$APP\""
+        },
+        {
+          "capability": "logs",
+          "command": "./forge logs <RESOURCE_ID> --full"
+        },
+        {
+          "capability": "plan",
+          "command": "./forge plan --app \"$APP\" --goal \"Add projects and tasks tracking\""
+        },
+        {
+          "capability": "provision",
+          "command": "./forge provision --app \"$APP\""
+        },
+        {
+          "capability": "test",
+          "command": "./forge test --app \"$APP\""
+        }
+      ]
+    }
+  ],
+  "oneRuleContract": "**Do all app lifecycle work through `./forge` (or `./new-app`). Never run `docker`, `npm`,\n`next`, or `node` directly, and never `cat`/read the app's source to check its state.**\n\nForge runs everything in Docker, records each action as a Resource, and returns compact JSON.\nGoing around it loses reproducibility and wastes tokens.",
+  "fixtures": [
+    {
+      "scenario": "make-the-app",
+      "scenarioKeys": [
+        "platform",
+        "init",
+        "provision",
+        "install",
+        "build",
+        "test",
+        "lint",
+        "dev",
+        "health"
+      ],
+      "files": [
+        "README.md",
+        "after-state.json",
+        "before-state.json",
+        "events.json",
+        "hops.json"
+      ]
+    }
+  ]
+}

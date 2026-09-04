@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "generate:starter-model": "node scripts/generate-starter-model.mjs",
+    "diff:starter-model": "node scripts/diff-starter-model.mjs",
+    "test": "node scripts/test-diff.mjs",
+    "typecheck": "node --check scripts/generate-starter-model.mjs && node --check scripts/diff-starter-model.mjs && node --check scripts/test-diff.mjs",
+    "version": "npm run generate:starter-model && git add starter-model.json"
+  }
+}

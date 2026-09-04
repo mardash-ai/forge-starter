@@ -59,6 +59,7 @@ Keep the register conversational and tuned: plain verbs, sentence case, no fille
 All lifecycle work (build, lint, test, dev) runs through `./forge` — never `npm`/`next`/`node`
 directly. When a `./forge` command returns a platform error (`{"error":{...}}`), read
 `.error.retry` and handle accordingly:
+
 - `change-input` → fix the input and retry once.
 - `needs-human` → stop and ask the human.
 - `retry` → retry the same command once.

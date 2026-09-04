@@ -6,16 +6,17 @@ description: Add or evolve a feature in this repo's single app (at ./app) using 
 # Add a Feature (spec-driven, design-first)
 
 The way to build on Forge is **describe the outcome, not the implementation**, then let
-the validation loop drive it to correct. You write a small *spec*; you turn it into code
+the validation loop drive it to correct. You write a small _spec_; you turn it into code
 that follows the conventions below; you validate it through `./forge` (in Docker) until
 it's green; and you **verify the behavior end-to-end** before calling it done. You never
 hand-run `npm`/`next`/`node`, and you don't read app source to check state — inspect via
 `./forge`.
 
 This skill owns the **authoring workflow**. It leans on two others:
+
 - **`provision-app`** — the Forge mechanics (init / provision / install / build / test / lint /
   inspect / explain / dev). That skill is the authoritative runbook for those commands.
-- **`frontend-design`** — the aesthetic direction for any UI you build (invoke it *before*
+- **`frontend-design`** — the aesthetic direction for any UI you build (invoke it _before_
   writing UI, see step 2).
 
 ---
@@ -31,7 +32,7 @@ This skill owns the **authoring workflow**. It leans on two others:
 6. Done        → lint/build/test green AND every acceptance criterion observably holds
 ```
 
-A good spec is small but **unambiguous about "done"** — the acceptance criteria *are* the
+A good spec is small but **unambiguous about "done"** — the acceptance criteria _are_ the
 definition of done, and they're what make first-try-correct possible.
 
 ---
@@ -41,21 +42,24 @@ definition of done, and they're what make first-try-correct possible.
 Put it at `specs/<feature-slug>/FEATURE.md`. Only two things are required — **Goal** and
 **Acceptance criteria**; everything else sharpens accuracy. If the human didn't write a
 spec, infer one from their request. **Only stop to ask about choices that are hard to
-reverse** — above all, *does this data need to survive a restart?* (that's the one thing
+reverse** — above all, _does this data need to survive a restart?_ (that's the one thing
 that forces a database). Don't ask about cosmetics.
 
 ```markdown
 # Feature: <short name>
 
 ## Goal
+
 <1–2 sentences: what a user can do, and why.>
 
 ## Acceptance criteria
+
 - [ ] <observable behavior you can verify by hand — e.g. "POST /api/tasks with an empty
       title is rejected with 400">
 - [ ] <...>
 
 ## Details (optional — include only what matters)
+
 - Routes/pages: <e.g. /tasks page; GET & POST /api/tasks>
 - Data: <entities + fields; SAY whether it must persist across restarts>
 - Non-goals: <what NOT to build — the cheapest way to stop gold-plating>
@@ -78,7 +82,7 @@ as generic.
 
 - Optionally render an **interactive mockup as an Artifact** so the human can approve the
   direction before you build. (Fonts can't load from a CDN in an Artifact — fall back to a
-  system stack; the *layout and any data-encoding* is the real thing to validate.)
+  system stack; the _layout and any data-encoding_ is the real thing to validate.)
 - Get sign-off on the direction, then implement to the DESIGN spec exactly.
 - Keep FEATURE.md and DESIGN.md consistent (same routes, same data model, same rules).
 
@@ -123,7 +127,7 @@ Rules that make features build first-try and stay testable:
     The web container reaches Postgres at host `postgres:5432` on the compose network; the
     fallback matches the provisioned credentials (`forge`/`forge`, db from `.env.example`).
   - **Create tables lazily** with a memoized `ensureSchema()` running `CREATE TABLE IF NOT
-    EXISTS …` on first query — there's no migration step. `gen_random_uuid()` is built into
+EXISTS …` on first query — there's no migration step. `gen_random_uuid()` is built into
     Postgres 16, no extension needed.
   - **Mark DB-backed pages `export const dynamic = 'force-dynamic'`** so `next build` doesn't
     try to connect while prerendering. API route handlers are dynamic already.
@@ -147,6 +151,7 @@ On any `"failed"`, run `./forge explain --resource <id>`, fix **only** the files
 `./forge inspect routes --app <name>` — don't read the whole repo.
 
 On a platform error (`{"error":{...}}`), read `.error.retry`:
+
 - `change-input` → fix the input and retry once.
 - `needs-human` → stop and ask the human.
 - `retry` → retry the same command once.
@@ -176,7 +181,7 @@ curl --retry 20 --retry-all-errors -sf http://localhost:3000/api/health   # wait
   DESIGN spec actually rendered (fonts, the signature element, states).
 - **Local gotcha:** if `./forge dev` fails with "port is already allocated" for `5432`,
   another project on the machine holds Postgres's host port. The app talks to Postgres
-  *internally* (`postgres:5432`), so remap only the **host** port in `app/compose.yaml`
+  _internally_ (`postgres:5432`), so remap only the **host** port in `app/compose.yaml`
   (e.g. `5433:5432`) — don't stop the other project's database.
 
 ## 6. Done

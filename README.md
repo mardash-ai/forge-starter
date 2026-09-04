@@ -1,6 +1,6 @@
 # Forge Starter
 
-The drop-dead simplest way to start building with **Forge**. This is *your project* — Forge
+The drop-dead simplest way to start building with **Forge**. This is _your project_ — Forge
 runs alongside it as a container. **Every repo is a single app**, and it lives at `./app`.
 Everything runs in Docker.
 
@@ -59,11 +59,11 @@ and iterates. You never have to remember commands.
 The `.claude/skills/` directory gives Claude project-specific know-how so it drives Forge the
 right way. Three skills come bundled:
 
-| Skill | What it does |
-|---|---|
-| **`add-a-feature`** | The spec-driven, design-first workflow for adding or evolving a feature — write a short spec, design the UI first, implement under `./app`, then validate and verify end-to-end. |
-| **`provision-app`** | The Forge mechanics — scaffold, provision, install, build, test, and lint the app in Docker via `./forge`, diagnosing failures with `forge explain`. |
-| **`frontend-design`** | Guidance for distinctive, intentional UI — typography, layout, and aesthetic choices that don't read as templated defaults. |
+| Skill                 | What it does                                                                                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`add-a-feature`**   | The spec-driven, design-first workflow for adding or evolving a feature — write a short spec, design the UI first, implement under `./app`, then validate and verify end-to-end. |
+| **`provision-app`**   | The Forge mechanics — scaffold, provision, install, build, test, and lint the app in Docker via `./forge`, diagnosing failures with `forge explain`.                             |
+| **`frontend-design`** | Guidance for distinctive, intentional UI — typography, layout, and aesthetic choices that don't read as templated defaults.                                                      |
 
 You don't invoke these directly; Claude picks the right one for what you ask.
 
@@ -94,16 +94,16 @@ skill for the full workflow.
 
 ## What is this directory?
 
-| Path | What it is |
-|---|---|
-| `app/` | **Your app** — the product. Created at `./app` by `./new-app` / `./forge init`. Commit it. |
-| `forge.theme.json` | *(optional)* Brand **all** platform-served UI (sign-in + the `/status` page) via `--forge-*` CSS tokens. Absent → neutral defaults. See [DEPLOY.md](DEPLOY.md). |
-| `specs/` | Feature specs — `specs/ADD_A_FEATURE.md` + `specs/<feature>/{FEATURE,DESIGN}.md`. |
-| `.forge/` | Forge's local Resource/Event/log store (gitignored). |
-| `.claude/skills/` | `add-a-feature`, `provision-app`, `frontend-design`. |
-| `./new-app` | One command: scaffold + validate the app. |
-| `./forge` | Thin CLI → talks to the Forge control-plane container. |
-| `compose.yaml`, `Makefile` | Launch the platform. Leave them alone. |
+| Path                       | What it is                                                                                                                                                      |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/`                     | **Your app** — the product. Created at `./app` by `./new-app` / `./forge init`. Commit it.                                                                      |
+| `forge.theme.json`         | _(optional)_ Brand **all** platform-served UI (sign-in + the `/status` page) via `--forge-*` CSS tokens. Absent → neutral defaults. See [DEPLOY.md](DEPLOY.md). |
+| `specs/`                   | Feature specs — `specs/ADD_A_FEATURE.md` + `specs/<feature>/{FEATURE,DESIGN}.md`.                                                                               |
+| `.forge/`                  | Forge's local Resource/Event/log store (gitignored).                                                                                                            |
+| `.claude/skills/`          | `add-a-feature`, `provision-app`, `frontend-design`.                                                                                                            |
+| `./new-app`                | One command: scaffold + validate the app.                                                                                                                       |
+| `./forge`                  | Thin CLI → talks to the Forge control-plane container.                                                                                                          |
+| `compose.yaml`, `Makefile` | Launch the platform. Leave them alone.                                                                                                                          |
 
 There is **no Forge source here** — Forge is a black-box platform you use through `./forge` /
 `./new-app` (and the HTTP API on `http://localhost:3717`). Your app never imports Forge
@@ -124,3 +124,42 @@ Each clone is isolated by its **directory** — its own Compose project (contain
 own `./.forge` state, and its own `./app`. The dev control plane binds `127.0.0.1:3717`, so to run
 **two** projects at the same time, change the published port in one project's `compose.yaml`
 (`ports` and `PORT`) so they don't collide on `3717`.
+
+## Releases and the starter model
+
+Every tagged release of **forge-starter** publishes a machine-readable **starter model** that
+describes the snapshot: the pinned Forge platform images, the bundled Claude Code skills (with
+their `./forge` capability tables), the CLAUDE.md "one rule" contract, and the recorded
+quickstart fixtures. This makes the starter state inspectable and diff-able across versions.
+
+### Files
+
+| File                   | Description                                                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `starter-model.json`   | Committed, version-stamped snapshot of the repo's key parameters (updated automatically on every `npm version` bump by the `version` lifecycle hook). |
+| `starter-changes.json` | Structured diff between the previous and current release (generated during the release workflow).                                                     |
+| `starter-changes.md`   | Human-readable Markdown summary of the same diff (attached to every GitHub Release).                                                                  |
+
+### How it works
+
+1. **On every commit:** `npm run generate:starter-model` regenerates `starter-model.json`
+   from the live repo contents (images from `compose.yaml`, skills from `.claude/skills/`,
+   fixtures from `fixtures/`). The `version` lifecycle hook in `package.json` runs this
+   automatically when the harness bumps the version via `npm version`.
+
+2. **CI drift guard:** Every push and pull request runs `starter-model:` job in CI. It
+   regenerates the model and fails if the result differs from the committed copy — so
+   `starter-model.json` is always in sync with the repo.
+
+3. **On every `v*` tag:** `.github/workflows/release.yml` regenerates the model, diffs it
+   against the previous tag's `starter-model.json`, and creates a GitHub Release with all
+   three files attached.
+
+### Scripts
+
+```bash
+npm run generate:starter-model   # regenerate starter-model.json (plain Node, no install)
+node scripts/diff-starter-model.mjs <prev.json> [next.json]
+                                 # diff two models → starter-changes.json + starter-changes.md
+npm test                         # run the diff test suite
+```

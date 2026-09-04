@@ -2,7 +2,7 @@
 
 > **mardash isolation — you are scoped to THIS project (`forge-starter`).** This repo is one of the
 > `mardash` wind-tunnel projects. Read/write **only within this repository**; never read or write a
-> sibling mardash project (`../forge`, `../forge-os`) — code *or* docs. The **mardash orchestrator**
+> sibling mardash project (`../forge`, `../forge-os`) — code _or_ docs. The **mardash orchestrator**
 > (`../mardash/`) hands you tasks + the contract you need — get everything from the task prompt, never
 > by reaching into another project. See `../mardash/CLAUDE.md`.
 
@@ -39,7 +39,7 @@ of truth for the spec-driven, design-first workflow:
 
 1. The human gives a short feature spec (Goal + acceptance criteria) → you save it at
    `specs/<feature-slug>/FEATURE.md`. If they didn't write one, infer it, and only ask about
-   choices that are hard to reverse (e.g. *must this data persist across restarts?*).
+   choices that are hard to reverse (e.g. _must this data persist across restarts?_).
 2. **Design first for any UI** — produce `specs/<feature-slug>/DESIGN.md` via the
    **`frontend-design` skill** (and often an interactive mockup) before writing components.
 3. Implement under `./app` (logic in `app/lib/`, pages in `app/app/`, tests in `app/tests/`).

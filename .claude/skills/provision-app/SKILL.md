@@ -11,7 +11,7 @@ branch on `status`. Do not read app source or dump logs unless a step says to.
 **This workspace is single-app.** Every repo holds exactly one app, and it lives at **`./app`**
 (the control plane is set to `FORGE_APP_LAYOUT=single`). `./forge …--app <name>` still takes a
 name — it's the app's identity/label — but there is only one app and it resolves to `./app`.
-`./forge init` scaffolds *into* `./app`, and a second `init` is rejected.
+`./forge init` scaffolds _into_ `./app`, and a second `init` is rejected.
 
 > This skill is the **mechanics**. To author a feature (spec → design → implement → verify),
 > use the **`add-a-feature`** skill, which calls these commands.
@@ -33,7 +33,7 @@ iterating or when a step fails.
 - Each `./forge` command prints **one line of compact JSON**. Parse it.
 - **Success is `status == "succeeded"` — NOT the exit code.** `build`/`test`/`lint` exit `0`
   even when the work failed; the failure is a Resource. A `{"error":{...}}` payload +
-  non-zero exit is a *platform* error (API down, bad input, policy block).
+  non-zero exit is a _platform_ error (API down, bad input, policy block).
 - Only `--platform web --framework nextjs` is implemented. Anything else returns
   `policy_blocked` — stop, don't retry.
 - The app name is `kebab-case` (`^[a-z0-9][a-z0-9-]*$`). The app scaffolds into **`./app`**.
@@ -138,14 +138,14 @@ unrequested work.
 
 ## Known failure signatures & gotchas
 
-| `likely_cause` / symptom | Fix |
-|---|---|
-| `Cannot find module 'next'` / `Dependencies are not installed` | Run `./forge install --app "$APP"`, then rebuild. |
-| `prerender error … NODE_ENV=development` | Re-provision to regenerate compose, then rebuild. A flag-less `./forge provision --app "$APP"` is safe — it converges from persisted `infra` in `forge.app.json` and won't drop services. |
-| `TypeScript type error` | Edit the file in `file_refs` (under `./app/`), fix the type, rebuild. |
-| `Lint reported problems` | Edit the file in `file_refs`, then `./forge lint --app "$APP"`. |
-| `Unsupported platform/framework` | Only `web`/`nextjs` exists. Stop and report. |
-| Adding an npm dependency | Edit `app/package.json`, then `./forge install` — never `npm` on the host. |
-| A DB-backed page fails to build (tries to connect while prerendering) | Mark the page `export const dynamic = 'force-dynamic'`. |
-| `./forge dev` fails: port `5432` already allocated | Another project holds Postgres's host port. The app uses `postgres:5432` internally — remap only the **host** port in `app/compose.yaml` (e.g. `5433:5432`); don't touch the other project. The remap persists in `forge.app.json` and survives re-provision (or set it with `--postgres-port 5433`). |
-| Host editor shows "cannot find module" for `next`/`react`/`@/…` | False positive — `node_modules` is in the Docker volume, not on the host. Trust `./forge build`/`lint`. |
+| `likely_cause` / symptom                                              | Fix                                                                                                                                                                                                                                                                                                   |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Cannot find module 'next'` / `Dependencies are not installed`        | Run `./forge install --app "$APP"`, then rebuild.                                                                                                                                                                                                                                                     |
+| `prerender error … NODE_ENV=development`                              | Re-provision to regenerate compose, then rebuild. A flag-less `./forge provision --app "$APP"` is safe — it converges from persisted `infra` in `forge.app.json` and won't drop services.                                                                                                             |
+| `TypeScript type error`                                               | Edit the file in `file_refs` (under `./app/`), fix the type, rebuild.                                                                                                                                                                                                                                 |
+| `Lint reported problems`                                              | Edit the file in `file_refs`, then `./forge lint --app "$APP"`.                                                                                                                                                                                                                                       |
+| `Unsupported platform/framework`                                      | Only `web`/`nextjs` exists. Stop and report.                                                                                                                                                                                                                                                          |
+| Adding an npm dependency                                              | Edit `app/package.json`, then `./forge install` — never `npm` on the host.                                                                                                                                                                                                                            |
+| A DB-backed page fails to build (tries to connect while prerendering) | Mark the page `export const dynamic = 'force-dynamic'`.                                                                                                                                                                                                                                               |
+| `./forge dev` fails: port `5432` already allocated                    | Another project holds Postgres's host port. The app uses `postgres:5432` internally — remap only the **host** port in `app/compose.yaml` (e.g. `5433:5432`); don't touch the other project. The remap persists in `forge.app.json` and survives re-provision (or set it with `--postgres-port 5433`). |
+| Host editor shows "cannot find module" for `next`/`react`/`@/…`       | False positive — `node_modules` is in the Docker volume, not on the host. Trust `./forge build`/`lint`.                                                                                                                                                                                               |

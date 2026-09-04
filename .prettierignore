@@ -1,0 +1,12 @@
+# Forge platform state (not committed; excluded for safety)
+.forge/
+
+# App has its own toolchain and formatting rules
+app/
+
+# Generated diff outputs (not hand-authored)
+starter-changes.md
+starter-changes.json
+
+# Dependencies
+node_modules/

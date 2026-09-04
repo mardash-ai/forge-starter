@@ -3,6 +3,9 @@ name: CI
 # Fast gate on every PR and push to main: the app's unit tests + a production build. (The Forge
 # dev loop runs these in Docker via ./forge; this is the plain CI equivalent for the deploy
 # pipeline.) Skips itself on the bare template (no app/), so this repo stays green.
+#
+# Also runs the starter-model drift guard on every push/PR: regenerates starter-model.json and
+# fails if the committed copy is out of date.
 
 on:
   pull_request:
@@ -36,3 +39,36 @@ jobs:
         name: Build
         working-directory: app
         run: npm run build
+
+  starter-model:
+    name: Starter model — lint, test, drift guard
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Prettier check
+        run: npx --yes prettier --check .
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Drift guard — starter-model.json must be up to date
+        run: |
+          node scripts/generate-starter-model.mjs
+          STATUS=$(git status --porcelain starter-model.json)
+          if [ -n "$STATUS" ]; then
+            echo "ERROR: starter-model.json is out of date or untracked."
+            echo "Run 'npm run generate:starter-model && git add starter-model.json' and commit."
+            git diff starter-model.json || true
+            exit 1
+          fi
+          echo "starter-model.json is up to date."

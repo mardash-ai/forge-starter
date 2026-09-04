@@ -83,7 +83,7 @@ later pass; this release brings only the deploy toolchain + single-app layout cu
   documents it and the opt-in **uptime history** (a background sampler + per-day timeline) enabled with
   **`FORGE_STATUS_SAMPLE=1`** in `app/.env.prod`. Platform-served — nothing to build in the app.
 - **Inherit app theming (C16).** A **`forge.theme.json`** at the app root now brands **all**
-  platform-served UI — the sign-in pages *and* the `/status` page — via `--forge-*` CSS tokens (a pinned
+  platform-served UI — the sign-in pages _and_ the `/status` page — via `--forge-*` CSS tokens (a pinned
   `mode: "dark"` makes `colors{}` the whole dark palette). Documented in `DEPLOY.md` and added to the
   `README.md` "What is this directory?" table as an optional file; absent → the platform's neutral defaults.
 - **Inherit `forge verify` (C14).** `DEPLOY.md` now describes `forge verify --app <app> --host <host>` — a
@@ -182,7 +182,7 @@ later pass; this release brings only the deploy toolchain + single-app layout cu
 
 - **Adopt the Forge `Productionize` capability — generate the production artifacts instead of
   hand-staging them.** `DEPLOY.md` now productionizes a cloned app with `forge productionize --app
-  <app> --host <domain> --web-image <ref@sha256:…>`, which generates `app/Dockerfile`,
+<app> --host <domain> --web-image <ref@sha256:…>`, which generates `app/Dockerfile`,
   `app/.dockerignore`, `output: 'standalone'` in `app/next.config.mjs`, `compose.prod.yaml`, and
   `.env.prod.example` — digest-pinned and convergent — then rolls them with `forge deploy`. The
   readiness-path and host-rule choices are kept as inputs you pass to the command.

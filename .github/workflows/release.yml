@@ -1,0 +1,53 @@
+name: Release
+
+# On every v* tag: regenerate the starter model, diff against the previous tag,
+# and create a GitHub Release carrying all three assets.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build release assets and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Regenerate starter model
+        run: node scripts/generate-starter-model.mjs
+
+      - name: Diff against previous tag
+        run: |
+          PREV=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          echo "Previous tag: ${PREV:-none}"
+          if [ -n "$PREV" ] && git show "$PREV:starter-model.json" > /tmp/prev-model.json 2>/dev/null; then
+            echo "Diffing against $PREV"
+          else
+            echo "No previous model found — treating as first release"
+            printf '{"$schema":"https://forge.build/starter-model/v1","version":"none"}' \
+              > /tmp/prev-model.json
+          fi
+          node scripts/diff-starter-model.mjs /tmp/prev-model.json starter-model.json
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --notes-file starter-changes.md \
+            starter-model.json \
+            starter-changes.json \
+            starter-changes.md

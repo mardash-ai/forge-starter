@@ -44,9 +44,9 @@ template the version lives in this `CHANGELOG.md` + the `v<new>` git tag instead
    every clone — as the source of truth. **If there is no `./app`** (you are in the bare forge-starter
    template repo, which scaffolds its app on clone), there is no app manifest; read the latest released
    `## [X.Y.Z]` heading from `CHANGELOG.md` instead (the template's own version lives in `CHANGELOG.md`
-   + git tags). Apply the directive: `patch`/`minor`/`major` bump per SemVer, or use the explicit
-   `X.Y.Z` verbatim. Call the result `<new>`. Derive `<owner>/<repo>` from `git remote get-url origin`
-   and `<today>` from the context above.
+   - git tags). Apply the directive: `patch`/`minor`/`major` bump per SemVer, or use the explicit
+     `X.Y.Z` verbatim. Call the result `<new>`. Derive `<owner>/<repo>` from `git remote get-url origin`
+     and `<today>` from the context above.
 
 3. **Require a canonical CHANGELOG entry — refuse to proceed without it.** Edit `CHANGELOG.md` so it
    contains a section `## [<new>] — <today>` (the separator is an **EM DASH `—`**, U+2014, not a
