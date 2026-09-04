@@ -1,6 +1,6 @@
 {
   "$schema": "https://forge.build/starter-model/v1",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "images": {
     "controlPlane": "ghcr.io/mardash-ai/forge-control-plane:1.55.0",
     "dataPlane": "ghcr.io/mardash-ai/forge-data-plane:1.55.0"

@@ -20,6 +20,98 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-04
+
+### Changed
+
+- **Bump the Forge control-plane and data-plane images to `1.55.0`.** `compose.yaml` now pins
+  `ghcr.io/mardash-ai/forge-control-plane:1.55.0` and passes
+  `FORGE_DATA_PLANE_IMAGE=ghcr.io/mardash-ai/forge-data-plane:1.55.0`, replacing `0.35.0`.
+  No residual `0.35.0` reference remains in the repo.
+
+### Fixed
+
+- **`compose.yaml` `FORGE_SECRETS_KEY` interpolation no longer hard-errors on `docker compose config`.** Replaced
+  `${FORGE_SECRETS_KEY:?…}` with `${FORGE_SECRETS_KEY:-}` so `docker compose config -q` passes in a
+  clean checkout without a `.env`. The control plane still refuses to start without a real key at runtime;
+  `.env.example` comment updated to match.
+
+### Added
+
+- **ForgeError retry rule added to all three bundled skills and CLAUDE.md (skill-set v0).**
+  `provision-app`, `add-a-feature`, and `frontend-design` SKILL.md files each now document the
+  platform error handling contract: on `{"error":{...}}`, read `.error.retry` —
+  `change-input` → fix and retry; `needs-human` → stop and ask; `retry` → retry;
+  `no` → report the resource id and stop. CLAUDE.md carries the same one-liner in its
+  granular-capabilities section for quick reference.
+- **Stale `< 0.3.0` provision warnings removed from `provision-app`.** The "destructive
+  provision on older control planes" callout and the related Known failure signatures rows are
+  gone; provision has converged from persisted infra since 0.3.0 and the current control plane
+  is 1.55.0. The step-gate `no` retry case is added.
+- **README.md and specs/ADD\_A\_FEATURE.md updated in lockstep.** Both files now document the
+  platform error `{"error":{...}}` / `.error.retry` handling and reflect the refreshed CLI,
+  flags, and one-line JSON contract.
+
+### Fixed
+
+- **`fixtures/make-the-app/after-state.json` — re-verified live state and added cleanup note.**
+  Re-ran `./forge inspect app/docker/routes`, `./forge dev`, and `curl /api/health` against the
+  running hello app; updated resource IDs and timestamps to the observed values. Added
+  `cleanup_note` documenting that the demo `app/` directory is removed from the host after
+  recording (it is not committed to the forge-starter template — users create it via `./new-app`).
+  Fixes: working tree was dirty after the previous fixture commit because build artifacts
+  under `app/` were left as untracked files; those are now cleaned up, leaving a clean tree.
+
+### Added
+
+- **`fixtures/make-the-app/` — Docker-only quickstart proof fixture** recorded against Forge
+  `v1.55.0`. Captures the full `git clone → export FORGE_SECRETS_KEY → ./new-app hello
+--with-postgres --dev` runbook: hops with raw forge payloads, forge event timeline,
+  before/after state, and a health-check confirmation (`status: ok, health: healthy`). README
+  names the exact image tags and documents the two machine-specific observations (port-5432
+  conflict workaround; intermittent init→provision race to report upstream). Self-contained so
+  it can move to the developer site repo unchanged (skill-set-plan §4.4 "one recording, two uses").
+
+### Added
+
+- **`starter-model.json` — versioned, machine-readable snapshot of the starter's state.**
+  Added `scripts/generate-starter-model.mjs` (plain Node, no install) that reads
+  `compose.yaml` (image pins), `.claude/skills/*/SKILL.md` (skill name, description, and
+  `./forge` capability mapping table parsed from each file), the CLAUDE.md "one rule"
+  contract block, and `fixtures/*/hops.json` (scenario keys), then writes a committed,
+  version-stamped `starter-model.json` under `$schema: https://forge.build/starter-model/v1`.
+  The root `package.json` `version` lifecycle hook runs the generator automatically on
+  every `npm version` bump and stages the result.
+
+- **`scripts/diff-starter-model.mjs` — deterministic diff between two starter models.**
+  Compares two `starter-model.json` files (version, platform images, skills, fixtures) and
+  emits `starter-changes.json` (structured) and `starter-changes.md` (human-readable Markdown).
+  Output is fully deterministic: all lists are sorted, so repeated runs on the same inputs
+  produce byte-identical files.
+
+- **`scripts/test-diff.mjs` — test suite for the generator and diff scripts.**
+  Plain Node test covering: valid model structure, skill/fixture required fields, generator
+  idempotence, diff identity (no false positives), version/image change detection, first-release
+  (empty previous model) handling, and output stability across runs. Runs via `npm test`.
+
+- **Root `package.json`** (`private: true`, `version: 0.1.0`, no dependencies) with
+  `generate:starter-model`, `diff:starter-model`, `test`, and `typecheck` scripts. The
+  `version` script (`npm run generate:starter-model && git add starter-model.json`) hooks
+  into the npm version lifecycle so releases always carry a fresh model.
+
+- **`.github/workflows/ci.yml` drift guard** (`starter-model` job). On every push and PR,
+  CI regenerates `starter-model.json` and fails if the committed copy is out of date —
+  enforcing that the model is always in sync with the repo. The same job runs
+  `npx prettier --check .`, `npm run typecheck`, and `npm test`.
+
+- **`.github/workflows/release.yml`** runs on `v*` tags: regenerates the starter model,
+  diffs against the previous tag's `starter-model.json` (falling back to an empty model on
+  the first release), and creates a GitHub Release with `starter-model.json`,
+  `starter-changes.json`, and `starter-changes.md` attached.
+
+- **README "Releases and the starter model" section** documenting the model file layout,
+  the CI drift guard, the release workflow, and the available scripts.
+
 ## [0.4.0] — 2026-07-11
 
 Inherit the **Forge 0.35.0 deployable-consumer scaffolding** — **deploy toolchain only**. A full
