@@ -1,6 +1,7 @@
 {
   "description": "State of the forge-starter repo after ./new-app hello --with-postgres --dev completed",
   "recorded_at": "2026-09-04T14:59:30Z",
+  "verified_at": "2026-09-04T15:08:53Z",
   "forge_tag": "1.55.0",
   "platform": {
     "control_plane": {
@@ -13,9 +14,9 @@
   "app_inspect": {
     "source": "./forge inspect app --app hello",
     "raw": {
-      "resource": "insp_6ab03330aa6b427a84a7",
+      "resource": "insp_f6553bd27868463eb4d8",
       "inspection_type": "app",
-      "summary": "hello — web/nextjs, 15 resource(s).",
+      "summary": "hello — web/nextjs, 22 resource(s).",
       "data": {
         "name": "hello",
         "platform": "web",
@@ -31,8 +32,8 @@
           "ports": { "web": 3000, "postgres": 5432 }
         },
         "resource_counts": {
-          "Inspection": 6,
-          "DevServer": 2,
+          "DevServer": 5,
+          "Inspection": 10,
           "Analysis": 1,
           "CheckRun": 1,
           "TestRun": 1,
@@ -47,7 +48,7 @@
   "docker_inspect": {
     "source": "./forge inspect docker --app hello",
     "raw": {
-      "resource": "insp_f3d1df8c64a64b359693",
+      "resource": "insp_db8b4ef753a04022a452",
       "inspection_type": "docker",
       "summary": "Provisioned. Services: web, postgres.",
       "data": {
@@ -60,7 +61,7 @@
   "dev_status": {
     "source": "./forge dev --app hello (idempotent re-check)",
     "raw": {
-      "resource": "dev_4eec757504ac4530ac58",
+      "resource": "dev_4601e17810334c3d8105",
       "status": "running",
       "url": "http://localhost:3000",
       "health": "healthy",
@@ -72,14 +73,14 @@
     "raw": {
       "status": "ok",
       "service": "hello",
-      "time": "2026-09-04T14:59:34.232Z",
+      "time": "2026-09-04T15:08:53.078Z",
       "checks": []
     }
   },
   "routes": {
     "source": "./forge inspect routes --app hello",
     "raw": {
-      "resource": "insp_eedfac3490a84d44b1db",
+      "resource": "insp_f45eef4bf0bb492981e6",
       "inspection_type": "routes",
       "summary": "2 route(s): 1 api, 1 page.",
       "data": [
@@ -88,5 +89,6 @@
       ]
     }
   },
+  "cleanup_note": "After recording, the demo app/ directory was removed from the host working tree. It was created during the quickstart run and serves as source for the running Docker containers; those containers continue to run regardless. The app/ directory is NOT committed to the forge-starter template repo — users create it fresh via ./new-app. Removing it here restores the template repo to a clean state.",
   "verdict": "PASS — app running, health: healthy, build/test/lint all succeeded"
 }
