@@ -11,8 +11,8 @@
 # run app work in Docker (Docker-out-of-Docker). The control-plane image carries the
 # Forge runtime + Docker CLI; the slimmer DATA PLANE image is used for production.
 #
-# FORGE_SECRETS_KEY is REQUIRED (compose refuses to start without it) — set it in a
-# local, gitignored `.env` (docker compose auto-loads it); see `.env.example`.
+# FORGE_SECRETS_KEY is REQUIRED — the control plane refuses to start without it.
+# Set it in a local, gitignored `.env` (docker compose auto-loads it); see `.env.example`.
 services:
   api:
     image: ghcr.io/mardash-ai/forge-control-plane:1.55.0
@@ -22,7 +22,7 @@ services:
       - FORGE_APP_LAYOUT=single
       - FORGE_WORKSPACE=${PWD}
       - FORGE_STATE_DIR=${PWD}/.forge
-      - FORGE_SECRETS_KEY=${FORGE_SECRETS_KEY:?set FORGE_SECRETS_KEY in the control-plane env}
+      - FORGE_SECRETS_KEY=${FORGE_SECRETS_KEY:-}
       - FORGE_DATA_PLANE_IMAGE=ghcr.io/mardash-ai/forge-data-plane:1.55.0
       - FORGE_PLATFORM_STORE=postgres
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}

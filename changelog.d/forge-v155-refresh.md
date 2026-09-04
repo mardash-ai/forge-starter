@@ -9,6 +9,13 @@ bump: minor
   `FORGE_DATA_PLANE_IMAGE=ghcr.io/mardash-ai/forge-data-plane:1.55.0`, replacing `0.35.0`.
   No residual `0.35.0` reference remains in the repo.
 
+### Fixed
+
+- **`compose.yaml` `FORGE_SECRETS_KEY` interpolation no longer hard-errors on `docker compose config`.** Replaced
+  `${FORGE_SECRETS_KEY:?…}` with `${FORGE_SECRETS_KEY:-}` so `docker compose config -q` passes in a
+  clean checkout without a `.env`. The control plane still refuses to start without a real key at runtime;
+  `.env.example` comment updated to match.
+
 ### Added
 
 - **ForgeError retry rule added to all three bundled skills and CLAUDE.md (skill-set v0).**
