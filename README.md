@@ -81,7 +81,9 @@ Once the app exists, work capability by capability:
 ```
 
 Every `./forge` command returns compact JSON with a `suggested_next` hint. Add `--summary`
-for human-readable output, or `./forge logs <id> --full` for a full log.
+for human-readable output, or `./forge logs <id> --full` for a full log. On a platform error
+`{"error":{...}}`, check `.error.retry`: `change-input` → fix and retry; `needs-human` →
+stop; `retry` → retry; `no` → report the resource id.
 
 ## Adding features (spec-driven, design-first)
 

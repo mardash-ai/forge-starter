@@ -17,7 +17,8 @@ workflow. It will:
 2. **Design first** for any UI — produce a `DESIGN.md` via the `frontend-design` skill, and
    often an interactive mockup for you to approve — before writing components.
 3. Implement under `./app` (logic in `app/lib/`, pages in `app/app/`, tests in `app/tests/`).
-4. Validate in Docker with `./forge lint / build / test`, self-healing via `./forge explain`.
+4. Validate in Docker with `./forge lint / build / test`, self-healing via `./forge explain`
+   (on platform errors `{"error":{...}}`, check `.error.retry` and handle accordingly).
 5. **Verify the behavior end-to-end** (drives the running app, checks persistence, screenshots UI).
 
 You don't need to specify file names, libraries, or steps — the skill and Forge's

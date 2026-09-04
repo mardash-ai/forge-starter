@@ -53,3 +53,13 @@ Use active voice as default. A control should say exactly what happens when it's
 Treat failure and emptiness as moments for direction, not mood. Explain what went wrong and how to fix it, in the interface's voice rather than a person's. Errors don't apologize, and they are never vague about what happened. An empty screen is an invitation to act.
 
 Keep the register conversational and tuned: plain verbs, sentence case, no filler, with tone matched to the brand and the audience. Let each element do exactly one job. A label labels, an example demonstrates, and nothing quietly does double duty.
+
+## Forge platform error handling
+
+All lifecycle work (build, lint, test, dev) runs through `./forge` — never `npm`/`next`/`node`
+directly. When a `./forge` command returns a platform error (`{"error":{...}}`), read
+`.error.retry` and handle accordingly:
+- `change-input` → fix the input and retry once.
+- `needs-human` → stop and ask the human.
+- `retry` → retry the same command once.
+- `no` → report the resource id and stop.

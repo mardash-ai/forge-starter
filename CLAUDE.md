@@ -61,6 +61,7 @@ runbook for the Forge mechanics:
 
 - Branch on the JSON `.status` field, not the exit code (`build`/`test`/`lint` exit 0 even on failure).
 - On `"failed"`, run `./forge explain --resource <id>` and fix only the files it names (under `./app/`).
+- On `{"error":{...}}` (platform error), read `.error.retry`: `change-input` → fix and retry; `needs-human` → stop and ask; `retry` → retry; `no` → report the resource id.
 - `--summary` for human-facing output; `--raw` only if explicitly asked.
 
 ## Layout

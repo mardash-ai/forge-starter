@@ -146,6 +146,12 @@ On any `"failed"`, run `./forge explain --resource <id>`, fix **only** the files
 (they're `path:line` under `./app/`), and re-run. Confirm the surface area with
 `./forge inspect routes --app <name>` — don't read the whole repo.
 
+On a platform error (`{"error":{...}}`), read `.error.retry`:
+- `change-input` → fix the input and retry once.
+- `needs-human` → stop and ask the human.
+- `retry` → retry the same command once.
+- `no` → report the resource id and stop.
+
 **Definition of green:** `lint` = 0 problems, `build` = succeeded, `test` = succeeded (0 failed).
 
 > Editor "Cannot find module 'next'/'react'/'@/lib/…'" diagnostics on the host are **false

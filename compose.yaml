@@ -15,7 +15,7 @@
 # local, gitignored `.env` (docker compose auto-loads it); see `.env.example`.
 services:
   api:
-    image: ghcr.io/mardash-ai/forge-control-plane:0.35.0
+    image: ghcr.io/mardash-ai/forge-control-plane:1.55.0
     ports: ["127.0.0.1:3717:3717"]
     environment:
       - PORT=3717
@@ -23,7 +23,7 @@ services:
       - FORGE_WORKSPACE=${PWD}
       - FORGE_STATE_DIR=${PWD}/.forge
       - FORGE_SECRETS_KEY=${FORGE_SECRETS_KEY:?set FORGE_SECRETS_KEY in the control-plane env}
-      - FORGE_DATA_PLANE_IMAGE=ghcr.io/mardash-ai/forge-data-plane:0.35.0
+      - FORGE_DATA_PLANE_IMAGE=ghcr.io/mardash-ai/forge-data-plane:1.55.0
       - FORGE_PLATFORM_STORE=postgres
       - GITHUB_TOKEN=${GITHUB_TOKEN:-}
     volumes:
